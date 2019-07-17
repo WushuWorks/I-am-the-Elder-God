@@ -15,27 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use game_logic::main_state::Game;
+/*
+Declaring our files as 'pub mod' here allows them to be 'use'd outside of here. In main.rs
+for example. Everything that you want to use must have the keyword 'pub', all the way down the function
+level.
+*/
 
-//Resources
-use quicksilver::prelude::*;
-use ncollide2d::shape::*;
-use nalgebra::Vector2;
-
-fn main() {
-
-    // NOTE: Set HIDPI to 1.0 to get pixel-perfect rendering.
-    // Otherwise the window resizes to whatever value the OS sets and
-    // scales the contents.
-    // https://docs.rs/glutin/0.19.0/glutin/dpi/index.html
-    std::env::set_var("WINIT_HIDPI_FACTOR", "1.0");
-
-    let settings = Settings {
-        // If the graphics do need to be scaled (e.g. using
-        // `with_center`), blur them. This looks better with fonts.
-        scale: quicksilver::graphics::ImageScaleStrategy::Blur,
-        ..Default::default()
-    };
-    run::<Game>("I am the Elder God", Vector::new(1200, 900), settings);
-
-}
+pub mod main_state;

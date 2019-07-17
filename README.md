@@ -24,6 +24,11 @@ Many specific details are currently in flux, and will change during development 
 
 1. This will be a 3 versus 1 board game
 2. This will be developed in 2D
-3. If practical, the game will use a hexagonal tiling system
+3. This will use square tiles
 
 Visit the project [page](https://www.wushuworks.com/projects/i-am-the-elder-god) for more details
+
+## Sources Cited
+
+This game makes heavy use of the state machine used in [Mehen's Portable Casino](https://github.com/OtherAesop/mehens_portable_casino)
+and shares structure and code with it.
