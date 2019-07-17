@@ -45,7 +45,7 @@ impl ElderOutro {
 
         //Image Load
         let bob = Asset::new(Image::load("PngBob.png"))?;
-        let game_frame = Asset::new(Image::load("GameFrame.png"))?;
+        let game_frame = Asset::new(Image::load("GameFrame1200x900.png"))?;
 
         Ok(Self {
             outro_img: game_frame,
