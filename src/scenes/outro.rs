@@ -68,7 +68,7 @@ impl ElderOutro {
         let mut retval = SceneReturn::Good;
 
         if window.keyboard()[Key::Return] == Pressed {
-            self.sound.execute(|music| {music.play()});
+            self.sound.execute(|music| {music.play()})?;
             retval = SceneReturn::Finished;
         }
 
@@ -77,6 +77,7 @@ impl ElderOutro {
 
     /// Draw stuff on the screen
     pub fn draw(&mut self, window: &mut Window) -> Result<()> {
+        window.clear(Color::WHITE)?;
 
         // Draw the frame
         self.outro_img.execute(|image| {

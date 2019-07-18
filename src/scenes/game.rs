@@ -73,28 +73,29 @@ impl ElderGame {
 
     /// Draw stuff on the screen
     pub fn draw(&mut self, window: &mut Window) -> Result<()> {
+        window.clear(Color::WHITE)?;
 
         // Draw the frame
         self.game_img.execute(|image| {
             window.draw(
                 &image
                     .area()
-                    .with_center((window.screen_size().x as i32 / 2, 40)),
+                    .with_center((0, 0)),
                 Img(&image),
             );
             Ok(())
-        });
+        })?;
 
         // Draw bob
         self.item_img.execute(|image| {
             window.draw(
                 &image
                     .area()
-                    .with_center((window.screen_size().x as i32 / 2, 40)),
+                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
                 Img(&image),
             );
             Ok(())
-        });
+        })?;
 
         // Draw text
         self.text.execute(|image| {
@@ -105,7 +106,7 @@ impl ElderGame {
                 Img(&image),
             );
             Ok(())
-        });
+        })?;
 
         Ok(())
     }

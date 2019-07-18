@@ -71,12 +71,14 @@ impl ElderIntro {
 
     /// Draw stuff on the screen
     pub fn draw(&mut self, window: &mut Window) -> Result<()> {
+        window.clear(Color::WHITE)?;
+
         // Draw the frame
         self.intro_img.execute(|image| {
             window.draw(
                 &image
                     .area()
-                    .with_center((window.screen_size().x as i32 / 2, 40)),
+                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
                 Img(&image),
             );
             Ok(())
@@ -87,7 +89,7 @@ impl ElderIntro {
             window.draw(
                 &image
                     .area()
-                    .with_center((window.screen_size().x as i32 / 2, 40)),
+                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
                 Img(&image),
             );
             Ok(())
