@@ -15,9 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use game_logic::scene_type::SceneReturn;
+use crate::game_logic::scene_type::SceneReturn;
 
-struct ElderOutro {
+//Resources
+use quicksilver::prelude::*;
+
+pub struct ElderOutro {
     outro_img: Asset<Image>,
     item_img: Asset<Image>,
     text: Asset<Image>,
@@ -58,7 +61,7 @@ impl ElderOutro {
     }
 
     /// Process keyboard and mouse, update the game state
-    pub fn update(&mut self, window: &mut Window) -> Result<()> {
+    pub fn update(&mut self, window: &mut Window) -> Result<SceneReturn> {
         use ButtonState::*;
         let mut retval = SceneReturn::Good;
 
@@ -127,7 +130,7 @@ impl ElderOutro {
                 Ok(())
             }
             _x => {
-                Err("Invalid winner in ElderOutro::winner - Player {:?} is invalid", _x)
+                Err("Invalid winner in ElderOutro::winner - Player " + _x + " is invalid")
             }
         }
     }

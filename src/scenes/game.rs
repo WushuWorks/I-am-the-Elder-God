@@ -15,9 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use game_logic::scene_type::SceneReturn;
+use crate::game_logic::scene_type::SceneReturn;
 
-struct ElderGame {
+//Resources
+use quicksilver::prelude::*;
+
+pub struct ElderGame {
     game_img: Asset<Image>,
     item_img: Asset<Image>,
     text: Asset<Image>,
@@ -56,7 +59,7 @@ impl ElderGame {
     }
 
     /// Process keyboard and mouse, update the game state
-    pub fn update(&mut self, window: &mut Window) -> Result<()> {
+    pub fn update(&mut self, window: &mut Window) -> Result<SceneReturn> {
         use ButtonState::*;
         let mut retval = SceneReturn::Good;
 
@@ -115,8 +118,8 @@ impl ElderGame {
 
     /// Special function that decides who is the winner of the game
     /// This should only be defined in a scene where a winner is relevant info, like a game
-    pub fn get_winner(&mut self)  -> Result<()>{
+    pub fn get_winner(&mut self)  -> Result<u32>{
         self.winner = 1337;
-        Ok(winner)
+        Ok(self.winner)
     }
 }

@@ -19,27 +19,33 @@
 Here we define the overarching 'Game' which contains all of its sub-components and is the core loop
 */
 
-use game_logic::scene_type::{SceneType, SceneReturn};
-use scenes::game::ElderGame;
-use scenes::intro::ElderIntro;
-use scenes::outro::ElderOutro;
+use crate::game_logic::scene_type::{SceneType, SceneReturn};
+use crate::scenes::game::ElderGame;
+use crate::scenes::intro::ElderIntro;
+use crate::scenes::outro::ElderOutro;
 
-struct Game {
+//Resources
+use quicksilver::prelude::*;
+//Std imports
+use std::slice::Iter;
+use std::iter::Cycle;
+
+pub struct Game<'a> {
     //For scene order control
-    curr_scene: SceneType,
-    scene_circle_iterator: Cycle<Iter<SceneType>>,
+    curr_scene: &'a SceneType,
+    scene_circle_iterator: Cycle<Iter<'a,SceneType>>,
     scene_vector: Vec<SceneType>,
 
     //Scene Data
-    intro_scenes: Asset<Image>,
-    game_scenes: Asset<Image>,
-    outro_scenes: Asset<Image>,
+    intro_scenes: ElderIntro,
+    game_scenes: ElderGame,
+    outro_scenes: ElderOutro,
 
     //Game Winner
     winner: u32,
 }
 
-impl State for Game {
+impl<'a> State for Game<'a> {
     /// Load the assets and initialise the game
     fn new() -> Result<Self> {
 
@@ -50,8 +56,8 @@ impl State for Game {
 
         //Scene order allocation, this defines the order of states
         let mut scenes: Vec<SceneType> = vec![SceneType::Intro, SceneType::Game, SceneType::Outro];
-        let mut scene_cycle: Cycle<Iter<SceneType>> = &mut scenes.iter().cycle();
-        let first_scene: SceneType = scene_cycle.next().expect("Empty scene buffer in Game::new(), cannot continue.");
+        let mut scene_cycle: Cycle<Iter<SceneType>> = scenes.iter().cycle();
+        let first_scene: &SceneType = scene_cycle.next().expect("Empty scene buffer in Game::new(), cannot continue.");
 
 
         Ok(Self {
@@ -84,13 +90,19 @@ impl State for Game {
         };
 
         match scene_flag {
-            SceneReturn::Good => Ok(), //Do not transition
+            SceneReturn::Good => Ok(()), //Do not transition
             SceneReturn::Finished => { //Do transition
                 self.curr_scene = self.scene_circle_iterator.next().unwrap();
-                Ok()
+                Ok(())
             },
             _x => panic!("Error in MainState key_down_event call: {:?}", _x),
         }
+    }
+
+    /// Handle various sorts of events, https://docs.rs/quicksilver/0.3.16/quicksilver/lifecycle/enum.Event.html
+    fn event(&mut self, event: &Event, window: &mut Window) -> Result<()> {
+        //Do nothing for now
+        Ok(())
     }
 
     /// Draw stuff on the screen
@@ -104,9 +116,6 @@ impl State for Game {
         };
     }
 
-    /// Handle various sorts of events, https://docs.rs/quicksilver/0.3.16/quicksilver/lifecycle/enum.Event.html
-    fn event(&mut self, window: &mut Window) -> Result<()> {
-        //Do nothing for now
-        Ok(())
-    }
+
+
 }
