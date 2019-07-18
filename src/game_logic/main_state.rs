@@ -41,6 +41,10 @@ pub struct Game {
     game_scenes: ElderGame,
     outro_scenes: ElderOutro,
 
+    //Large Files
+    overlay: Asset<Image>,
+    bg_music: Asset<Sound>,
+
     //Game Winner
     winner: u32,
 }
@@ -55,6 +59,10 @@ impl State for Game {
         let game = ElderGame::new().expect("Cannot load Elder Game");
         let outro = ElderOutro::new().expect("Cannot load Elder Outro");
 
+        //Large/universal data allocations, waste not want not
+        let music = Asset::new( Sound::load("vgm21.wav"));
+        let game_overlay = Asset::new(Image::load("FrameBorder1024x768.png"));
+
         //Scene order allocation, this defines the order of states
         let scenes: Vec<SceneType> = vec![SceneType::Intro, SceneType::Game, SceneType::Outro];
         let mut scene_cycle: Cycle<IntoIter<SceneType>> = scenes.into_iter().cycle();
@@ -68,6 +76,10 @@ impl State for Game {
             intro_scenes: intro,
             game_scenes: game,
             outro_scenes: outro,
+
+            //Large Files
+            overlay: game_overlay,
+            bg_music: music,
 
             winner: 0,
         })
@@ -107,15 +119,35 @@ impl State for Game {
     }
 
     /// Draw stuff on the screen
+    /// Note that since the center gap is 800x600 you can offset coordinates to compensate for this
+    /// by keeping in mind that there is a 112p horizonatal gap and 84p vertical gap on from a single side
+    ///
+    /// Correction Offset Example - here we render from the center frame's bottom left corner
+    /// ```translate((2 + 112, window.screen_size().y as i32 - 30 - 84))```
+    ///
     fn draw(&mut self, window: &mut Window) -> Result<()> {
+        window.clear(Color::WHITE)?;
+        //Draw overlay first to put it on the bottom.
+        self.overlay.execute(|image| {
+            window.draw(
+                &image
+                    .area()
+                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
+                Img(&image),
+            );
+            Ok(())
+        })?;
 
         //Result is passed up
-        match self.curr_scene {
+        let retval = match self.curr_scene {
             SceneType::Intro     => self.intro_scenes.draw(window),
             SceneType::Game      => self.game_scenes.draw(window),
             SceneType::Outro     => self.outro_scenes.draw(window),
             _                    => panic!("Unhandled scene type {:?} encountered in MainState draw.", self.curr_scene),
-        }
+        };
+
+
+        retval
     }
 
 

@@ -24,14 +24,12 @@ pub struct ElderIntro {
     intro_img: Asset<Image>,
     item_img: Asset<Image>,
     text: Asset<Image>,
-    sound: Asset<Sound>,
 }
 
 impl ElderIntro {
     /// Load the assets and initialise the game
     pub fn new() -> Result<Self> {
         let font_mononoki = "square.ttf";
-        let music = "vgm21.wav";
 
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then( |font| {
@@ -41,9 +39,6 @@ impl ElderIntro {
             )
         }));
 
-        //Music Load
-        let music = Asset::new( Sound::load(music));
-
         //Image Load
         let bob = Asset::new(Image::load("PngBob.png"));
         let game_frame = Asset::new(Image::load("GameFrame800x600.png"));
@@ -52,7 +47,6 @@ impl ElderIntro {
             intro_img: game_frame,
             item_img: bob,
             text: text_info,
-            sound: music,
         })
     }
 
@@ -62,7 +56,6 @@ impl ElderIntro {
         let mut retval = SceneReturn::Good;
 
         if window.keyboard()[Key::Return] == Pressed {
-            self.sound.execute(|music| {music.play()})?;
             retval = SceneReturn::Finished;
         }
 
@@ -71,7 +64,6 @@ impl ElderIntro {
 
     /// Draw stuff on the screen
     pub fn draw(&mut self, window: &mut Window) -> Result<()> {
-        window.clear(Color::WHITE)?;
 
         // Draw the frame
         self.intro_img.execute(|image| {
@@ -100,7 +92,7 @@ impl ElderIntro {
             window.draw(
                 &image
                     .area()
-                    .translate((2, window.screen_size().y as i32 - 30)),
+                    .translate((2 + 112, window.screen_size().y as i32 - 30 - 84)),
                 Img(&image),
             );
             Ok(())
