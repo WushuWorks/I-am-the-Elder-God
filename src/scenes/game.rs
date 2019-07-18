@@ -40,14 +40,14 @@ impl ElderGame {
                 "Square font am I, game this is.",
                 &FontStyle::new(20.0, Color::BLACK),
             )
-        }))?;
+        }));
 
         //Music Load
         let music = Asset::new( Sound::load(music));
 
         //Image Load
-        let bob = Asset::new(Image::load("PngBob.png"))?;
-        let game_frame = Asset::new(Image::load("GameFrame1200x900.png"))?;
+        let bob = Asset::new(Image::load("PngBob.png"));
+        let game_frame = Asset::new(Image::load("GameFrame1200x900.png"));
 
         Ok(Self {
             game_img: game_frame,
@@ -65,7 +65,7 @@ impl ElderGame {
 
         if window.keyboard()[Key::Return] == Pressed {
             self.sound.execute(|music| {music.play()})?;
-            retval = Ok(SceneReturn::Finished);
+            retval = SceneReturn::Finished;
         }
 
         Ok(retval)
@@ -83,7 +83,7 @@ impl ElderGame {
                 Img(&image),
             );
             Ok(())
-        })?;
+        });
 
         // Draw bob
         self.item_img.execute(|image| {
@@ -94,7 +94,7 @@ impl ElderGame {
                 Img(&image),
             );
             Ok(())
-        })?;
+        });
 
         // Draw text
         self.text.execute(|image| {
@@ -105,13 +105,14 @@ impl ElderGame {
                 Img(&image),
             );
             Ok(())
-        })?;
+        });
 
         Ok(())
     }
 
     /// Handle various sorts of events, https://docs.rs/quicksilver/0.3.16/quicksilver/lifecycle/enum.Event.html
-    pub fn event(&mut self, window: &mut Window) -> Result<()> {
+    #[allow(unreachable_patterns, dead_code)]
+    pub fn event(&mut self, _event: &Event, _window: &mut Window) -> Result<()> {
         //Do nothing
         Ok(())
     }

@@ -20,6 +20,8 @@ use crate::game_logic::scene_type::SceneReturn;
 //Resources
 use quicksilver::prelude::*;
 
+
+#[allow(unreachable_patterns, dead_code)]
 pub struct ElderOutro {
     outro_img: Asset<Image>,
     item_img: Asset<Image>,
@@ -41,14 +43,14 @@ impl ElderOutro {
                 "Square font am I, outro this is.",
                 &FontStyle::new(20.0, Color::BLACK),
             )
-        }))?;
+        }));
 
         //Music Load
         let music = Asset::new( Sound::load(music));
 
         //Image Load
-        let bob = Asset::new(Image::load("PngBob.png"))?;
-        let game_frame = Asset::new(Image::load("GameFrame1200x900.png"))?;
+        let bob = Asset::new(Image::load("PngBob.png"));
+        let game_frame = Asset::new(Image::load("GameFrame1200x900.png"));
 
         Ok(Self {
             outro_img: game_frame,
@@ -66,8 +68,8 @@ impl ElderOutro {
         let mut retval = SceneReturn::Good;
 
         if window.keyboard()[Key::Return] == Pressed {
-            self.sound.execute(|music| {music.play()})?;
-            retval = Ok(SceneReturn::Finished);
+            self.sound.execute(|music| {music.play()});
+            retval = SceneReturn::Finished;
         }
 
         Ok(retval)
@@ -113,11 +115,13 @@ impl ElderOutro {
     }
 
     /// Handle various sorts of events, https://docs.rs/quicksilver/0.3.16/quicksilver/lifecycle/enum.Event.html
-    pub fn event(&mut self, window: &mut Window) -> Result<()> {
+    #[allow(unreachable_patterns, dead_code)]
+    pub fn event(&mut self, _event: &Event, _window: &mut Window) -> Result<()> {
         //Do nothing
         Ok(())
     }
 
+    #[allow(unreachable_patterns, dead_code)]
     pub fn set_winner(&mut self, winner: &u32) -> Result<()>{
         match winner {
 
@@ -130,7 +134,7 @@ impl ElderOutro {
                 Ok(())
             }
             _x => {
-                Err("Invalid winner in ElderOutro::winner - Player " + _x + " is invalid")
+                panic!("Invalid winner set in ElderOutro::winner")
             }
         }
     }

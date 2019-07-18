@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 #[allow(unused)]
 pub enum SceneType {
     Intro,
@@ -28,8 +28,9 @@ pub enum SceneType {
     Exit,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum SceneReturn {
     Good,
     Finished,
-    Err(String),
+//    Err(String),
 }

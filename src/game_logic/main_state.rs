@@ -27,14 +27,14 @@ use crate::scenes::outro::ElderOutro;
 //Resources
 use quicksilver::prelude::*;
 //Std imports
-use std::slice::Iter;
+use std::vec::IntoIter;
 use std::iter::Cycle;
 
-pub struct Game<'a> {
+
+pub struct Game {
     //For scene order control
-    curr_scene: &'a SceneType,
-    scene_circle_iterator: Cycle<Iter<'a,SceneType>>,
-    scene_vector: Vec<SceneType>,
+    curr_scene:  SceneType,
+    scene_circle_iterator: Cycle<IntoIter<SceneType>>,
 
     //Scene Data
     intro_scenes: ElderIntro,
@@ -45,7 +45,8 @@ pub struct Game<'a> {
     winner: u32,
 }
 
-impl<'a> State for Game<'a> {
+#[allow(unreachable_patterns, dead_code)]
+impl State for Game {
     /// Load the assets and initialise the game
     fn new() -> Result<Self> {
 
@@ -55,15 +56,14 @@ impl<'a> State for Game<'a> {
         let outro = ElderOutro::new().expect("Cannot load Elder Outro");
 
         //Scene order allocation, this defines the order of states
-        let mut scenes: Vec<SceneType> = vec![SceneType::Intro, SceneType::Game, SceneType::Outro];
-        let mut scene_cycle: Cycle<Iter<SceneType>> = scenes.iter().cycle();
-        let first_scene: &SceneType = scene_cycle.next().expect("Empty scene buffer in Game::new(), cannot continue.");
+        let scenes: Vec<SceneType> = vec![SceneType::Intro, SceneType::Game, SceneType::Outro];
+        let mut scene_cycle: Cycle<IntoIter<SceneType>> = scenes.into_iter().cycle();
+        let first_scene: SceneType = scene_cycle.next().clone().expect("Empty scene buffer in Game::new(), cannot continue.");
 
 
         Ok(Self {
             curr_scene: first_scene,
             scene_circle_iterator: scene_cycle,
-            scene_vector: scenes,
 
             intro_scenes: intro,
             game_scenes: game,
@@ -74,6 +74,7 @@ impl<'a> State for Game<'a> {
     }
 
     /// Process keyboard and mouse, update the game state
+    #[allow(unreachable_patterns)]
     fn update(&mut self, window: &mut Window) -> Result<()> {
 
         let scene_flag = match self.curr_scene {
@@ -95,12 +96,12 @@ impl<'a> State for Game<'a> {
                 self.curr_scene = self.scene_circle_iterator.next().unwrap();
                 Ok(())
             },
-            _x => panic!("Error in MainState key_down_event call: {:?}", _x),
+            _x => panic!("Error in MainState update call: {:?}", _x),
         }
     }
 
     /// Handle various sorts of events, https://docs.rs/quicksilver/0.3.16/quicksilver/lifecycle/enum.Event.html
-    fn event(&mut self, event: &Event, window: &mut Window) -> Result<()> {
+    fn event(&mut self, _event: &Event, _window: &mut Window) -> Result<()> {
         //Do nothing for now
         Ok(())
     }
@@ -108,12 +109,13 @@ impl<'a> State for Game<'a> {
     /// Draw stuff on the screen
     fn draw(&mut self, window: &mut Window) -> Result<()> {
 
-        let msg = match self.curr_scene {
-            SceneType::Intro     => self.intro_scenes.draw(window)?,
-            SceneType::Game      => self.game_scenes.draw(window)?,
-            SceneType::Outro     => self.outro_scenes.draw(window)?,
+        //Result is passed up
+        match self.curr_scene {
+            SceneType::Intro     => self.intro_scenes.draw(window),
+            SceneType::Game      => self.game_scenes.draw(window),
+            SceneType::Outro     => self.outro_scenes.draw(window),
             _                    => panic!("Unhandled scene type {:?} encountered in MainState draw.", self.curr_scene),
-        };
+        }
     }
 
 
