@@ -86,7 +86,6 @@ impl State for Game {
     }
 
     /// Process keyboard and mouse, update the game state
-    #[allow(unreachable_patterns)]
     fn update(&mut self, window: &mut Window) -> Result<()> {
 
         let scene_flag = match self.curr_scene {
@@ -108,7 +107,7 @@ impl State for Game {
                 self.curr_scene = self.scene_circle_iterator.next().unwrap();
                 Ok(())
             },
-            _x => panic!("Error in MainState update call: {:?}", _x),
+            //_x => panic!("Error in MainState update call: {:?}", _x),
         }
     }
 
