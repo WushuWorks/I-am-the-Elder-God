@@ -66,7 +66,7 @@ impl State for Game {
         //Scene order allocation, this defines the order of states
         let scenes: Vec<SceneType> = vec![SceneType::Intro, SceneType::Game, SceneType::Outro];
         let mut scene_cycle: Cycle<IntoIter<SceneType>> = scenes.into_iter().cycle();
-        let first_scene: SceneType = scene_cycle.next().clone().expect("Empty scene buffer in Game::new(), cannot continue.");
+        let first_scene: SceneType = scene_cycle.next().expect("Empty scene buffer in Game::new(), cannot continue.");
 
 
         Ok(Self {
