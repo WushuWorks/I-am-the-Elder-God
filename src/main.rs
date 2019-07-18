@@ -40,6 +40,6 @@ fn main() {
         scale: quicksilver::graphics::ImageScaleStrategy::Blur,
         ..Default::default()
     };
-    run::<Game>("I am the Elder God", Vector::new(1200, 900), settings);
+    run::<Game>("I am the Elder God", Vector::new(800, 600), settings);
 
 }

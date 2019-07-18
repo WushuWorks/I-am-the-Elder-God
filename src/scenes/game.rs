@@ -47,7 +47,7 @@ impl ElderGame {
 
         //Image Load
         let bob = Asset::new(Image::load("PngBob.png"));
-        let game_frame = Asset::new(Image::load("GameFrame1200x900.png"));
+        let game_frame = Asset::new(Image::load("GameFrame800x600.png"));
 
         Ok(Self {
             game_img: game_frame,
