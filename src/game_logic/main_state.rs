@@ -49,7 +49,6 @@ pub struct Game {
     winner: u32,
 }
 
-#[allow(unreachable_patterns, dead_code)]
 impl State for Game {
     /// Load the assets and initialise the game
     fn new() -> Result<Self> {
@@ -125,6 +124,7 @@ impl State for Game {
     ///
     fn draw(&mut self, window: &mut Window) -> Result<()> {
         window.clear(Color::WHITE)?;
+
         //Draw overlay first to put it on the bottom.
         self.overlay.execute(|image| {
             window.draw(
