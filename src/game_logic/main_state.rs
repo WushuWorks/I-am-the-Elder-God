@@ -107,7 +107,6 @@ impl State for Game {
                 self.curr_scene = self.scene_circle_iterator.next().unwrap();
                 Ok(())
             },
-            //_x => panic!("Error in MainState update call: {:?}", _x),
         }
     }
 

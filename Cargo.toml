@@ -7,6 +7,6 @@ edition = "2018"
 [dependencies]
 # More features: "collisions", "complex_shapes", "immi_ui", "sounds", "gamepads"
 # Here everything is enabled because more power = more better
-quicksilver = { version = "0.3.10", default-features = true}
+quicksilver = { version = "0.3.16", default-features = false, features = ["fonts", "saving", "sounds"]}
 nalgebra = "0.18.0"
 ncollide2d = "0.19.2"
