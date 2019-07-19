@@ -28,6 +28,16 @@ Many specific details are currently in flux, and will change during development 
 
 Visit the project [page](https://www.wushuworks.com/projects/i-am-the-elder-god) for more details
 
+# Supported Browsers
+
+In order of best to worst
+
+Firefox, Opera, Chrome
+
+The below browsers are officially unsupported
+
+1) All Microsoft browsers
+
 ## Sources Cited
 
 This game makes heavy use of the state machine used in [Mehen's Portable Casino](https://github.com/OtherAesop/mehens_portable_casino)

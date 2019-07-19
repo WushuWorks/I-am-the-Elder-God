@@ -16,7 +16,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 /*
-Here we define the overarching 'Game' which contains all of its sub-components and is the core loop
+Here we define the overarching 'Game' which contains all of its sub-components and is the core loop.
 */
 
 use crate::game_logic::scene_type::{SceneType, SceneReturn};
