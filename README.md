@@ -45,7 +45,7 @@ website [here](https://www.mozilla.org/)
 
 **Play** the current web release [here](https://wushuworks.github.io/I-am-the-Elder-God/)
 
-# Quick Build Instructions (For Developers)
+# Play Instructions (For Developers)
 
 ## Desktop
 1. Clone to a repo of your choice
