@@ -40,7 +40,9 @@ The below browsers are officially unsupported
 
 # Quick Play Instructions (For Players)
 
-Play the current web release [here](https://wushuworks.github.io/I-am-the-Elder-God/)
+Click [here](https://www.mozilla.org/) to download **Firefox** so you can
+**play** the current web release [here](https://wushuworks.github.io/I-am-the-Elder-God/)
+in it.
 
 # Quick Build Instructions (For Developers)
 
