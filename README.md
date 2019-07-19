@@ -53,8 +53,9 @@ website [here](https://www.mozilla.org/)
 
 ## Web
 1. Clone to a repo of your choice
-2. Run `web start --release`
-3. Copy `http://[::1]:8000` into a Firefox of your choice
+2. **If** `cargo-web` is not installed, run `cargo install cargo-web`
+3. Run `web start --release`
+4. Copy `http://[::1]:8000` into a Firefox of your choice
 
 # Build for Deployment to GitHub (For Developers)
 
