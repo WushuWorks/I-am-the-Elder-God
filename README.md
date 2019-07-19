@@ -57,7 +57,7 @@ website [here](https://www.mozilla.org/)
 3. Run `web start --release`
 4. Copy `http://[::1]:8000` into a Firefox of your choice
 
-# Build for Deployment to GitHub (For Developers)
+# Build for Deployment to GitHub Pages (For Developers)
 
 1. **Push** all commits to `master` branch
 2. **Checkout** (or create) to `gh-pages` branch, *very important*
