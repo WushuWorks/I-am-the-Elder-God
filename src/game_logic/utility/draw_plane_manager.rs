@@ -15,12 +15,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-/*
-Declaring our files as 'pub mod' here allows them to be 'use'd outside of here. In main.rs
-for example. Everything that you want to use must have the keyword 'pub', all the way down the function
-level.
-*/
+///Manages z-plane coordinates, and allows you to automatically prevent duplicates
+pub struct PlaneManager {
+    z_plane: u32,
+}
 
-pub mod main_state;
-pub mod scene_type;
-pub mod utility;
+impl PlaneManager{
+    pub fn new() -> Self{
+        Self {
+            z_plane: 0,
+        }
+    }
+    ///Sets the next plane coordinate, and return
+    pub fn next_z_plane(&mut self) -> u32 {
+        let retval = this.zplane;
+        this.z_plane += 1;
+        retval
+    }
+    ///Checks the next coordinate to be returned
+    fn peek_next(self) -> u32 {
+        this.z_plane
+    }
+}
+

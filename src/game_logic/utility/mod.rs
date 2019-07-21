@@ -16,11 +16,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 /*
-Declaring our files as 'pub mod' here allows them to be 'use'd outside of here. In main.rs
-for example. Everything that you want to use must have the keyword 'pub', all the way down the function
-level.
+See game_logic::mod.rs for an explanation of mod files
 */
 
-pub mod main_state;
-pub mod scene_type;
-pub mod utility;
+pub mod draw_plane_manager;

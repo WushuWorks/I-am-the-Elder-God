@@ -144,10 +144,7 @@ impl State for Game {
             _                    => panic!("Unhandled scene type {:?} encountered in MainState draw.", self.curr_scene),
         };
 
-
         retval
     }
-
-
 
 }

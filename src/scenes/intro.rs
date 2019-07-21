@@ -16,17 +16,18 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::game_logic::scene_type::SceneReturn;
+use crate::game_logic::utility::draw_plane_manager::PlaneManager;
 
 //Resources
 use quicksilver::prelude::*;
 
 pub struct ElderIntro {
     intro_background: Asset<Image>,
-
     intro_scenes: Vec<Asset<Image>>,
     curr_scene_index: usize,
     text: Asset<Image>,
 }
+
 
 impl ElderIntro {
     /// Load the assets and initialise the game
@@ -56,7 +57,7 @@ impl ElderIntro {
         Ok(Self {
             intro_background: Asset::new(Image::load(intro_background)),
             intro_scenes: scenes,
-            curr_scene_index: 1,
+            curr_scene_index: 0,
             text: text_info,
         })
     }
@@ -93,22 +94,30 @@ impl ElderIntro {
             Ok(())
         })?;
 
-        // Draw top scene
+        /// Draws the selected scene
+        /// note that we draw scenes here and explicitly set the z coordinate, so anything
+        /// to be rendered above this must have an explicitly higher z value
         self.intro_scenes[self.curr_scene_index].execute(|image| {
-            window.draw(
-                &image.area()
-                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
-                Img(&image),
-            );
-            Ok(())
+             window.draw_ex(
+                    &image.area()
+                        .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
+                    Img(&image),
+                 Transform::IDENTITY,
+                 1,
+             );
+             Ok(())
         })?;
 
-        // Draw text
+
+        /// Draw label text
+        /// This should always render on top to show the state the game is in
         self.text.execute(|image| {
-            window.draw(
+            window.draw_ex(
                 &image.area()
                     .translate((2 + 64, window.screen_size().y as i32 - 30 - 84)),
                 Img(&image),
+                Transform::IDENTITY,
+                2,
             );
             Ok(())
         })?;
