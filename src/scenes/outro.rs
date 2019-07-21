@@ -15,22 +15,26 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::game_logic::scene_type::SceneReturn;
+use crate::game_logic::scene_type::{SceneReturn, PlayerType};
 
-//Resources
+//Resource
 use quicksilver::prelude::*;
 
 
 #[allow(unreachable_patterns, dead_code)]
 pub struct ElderOutro {
     outro_background: Asset<Image>,
+    outro_scenes_p0: Vec<Asset<Image>>,
     outro_scenes_p1: Vec<Asset<Image>>,
     outro_scenes_p2: Vec<Asset<Image>>,
+    curr_scene_index_p0: usize,
     curr_scene_index_p1: usize,
     curr_scene_index_p2: usize,
+
+    enter_button: Asset<Image>,
     text: Asset<Image>,
 
-    winner: u32,
+    winner: PlayerType,
 }
 
 impl ElderOutro {
@@ -38,27 +42,29 @@ impl ElderOutro {
     pub fn new() -> Result<Self> {
         let font_mononoki = "square.ttf";
         let background = "GCSeamlessBackground800x600.png";
+        let enter = "Enter-120x90.png";
         //I declare like this because it is a sensible way to organize arbitrary ordered images
+        //P0 Victory scenes
+        let p0_scene = ("P0Win1-800x600.png", "P0Win2-800x600.png", "P0Win3-800x600.png", "P0Win4-800x600.png");
         //P1 Victory scenes
-        let p1_scene1 = "P1Win1800x600.png";
-        let p1_scene2 = "P1Win2800x600.png";
-        let p1_scene3 = "P1Win3800x600.png";
-        let p1_scene4 = "P1Win4800x600.png";
+        let p1_scene = ("P1Win1-800x600.png", "P1Win2-800x600.png", "P1Win3-800x600.png", "P1Win4-800x600.png");
         //P2 victory scenes
-        let p2_scene1 = "P2Win1800x600.png";
-        let p2_scene2 = "P2Win2800x600.png";
-        let p2_scene3 = "P2Win3800x600.png";
-        let p2_scene4 = "P2Win4800x600.png";
+        let p2_scene = ("P2Win1-800x600.png", "P2Win2-800x600.png", "P2Win3-800x600.png", "P2Win4-800x600.png");
+        //P0 scene vec
+        let p0_scenes = vec![Asset::new(Image::load(p0_scene.0)),
+                                                Asset::new(Image::load(p0_scene.1)),
+                                                Asset::new(Image::load(p0_scene.2)),
+                                                Asset::new(Image::load(p0_scene.3)),];
         //P1 scene vec
-        let p1_scenes = vec![Asset::new(Image::load(p1_scene1)),
-                                            Asset::new(Image::load(p1_scene2)),
-                                            Asset::new(Image::load(p1_scene3)),
-                                            Asset::new(Image::load(p1_scene4)),];
+        let p1_scenes = vec![Asset::new(Image::load(p1_scene.0)),
+                                                Asset::new(Image::load(p1_scene.1)),
+                                                Asset::new(Image::load(p1_scene.2)),
+                                                Asset::new(Image::load(p1_scene.3)),];
         //P2 scene vec
-        let p2_scenes = vec![Asset::new(Image::load(p2_scene1)),
-                                            Asset::new(Image::load(p2_scene2)),
-                                            Asset::new(Image::load(p2_scene3)),
-                                            Asset::new(Image::load(p2_scene4)),];
+        let p2_scenes = vec![Asset::new(Image::load(p2_scene.0)),
+                                                Asset::new(Image::load(p2_scene.1)),
+                                                Asset::new(Image::load(p2_scene.2)),
+                                                Asset::new(Image::load(p2_scene.3)),];
 
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then( |font| {
@@ -68,18 +74,19 @@ impl ElderOutro {
             )
         }));
 
-        //Image Load
-        let game_frame = Asset::new(Image::load("GameFrame800x600.png"));
-
         Ok(Self {
             outro_background: Asset::new(Image::load(background)),
+            outro_scenes_p0: p0_scenes,
             outro_scenes_p1: p1_scenes,
             outro_scenes_p2: p2_scenes,
+            curr_scene_index_p0: 0,
             curr_scene_index_p1: 0,
             curr_scene_index_p2: 0,
+
+            enter_button: Asset::new(Image::load(enter)),
             text: text_info,
 
-            winner: 0,
+            winner: PlayerType::Undetermined,
         })
     }
 
@@ -89,7 +96,22 @@ impl ElderOutro {
         let mut retval = SceneReturn::Good;
 
         if window.keyboard()[Key::Return] == Pressed {
-            retval = SceneReturn::Finished;
+            // Matches the winner and increments their scene counters.
+            // Resetting and finishing when done
+            match self.winner {
+                PlayerType::Undetermined => {
+                    if self.curr_scene_index_p0 < self.outro_scenes_p0.len() - 1 {self.curr_scene_index_p0 += 1;}
+                    else { self.curr_scene_index_p0 = 0; retval = SceneReturn::Finished;}
+                },
+                PlayerType::Player1 => {
+                    if self.curr_scene_index_p1 < self.outro_scenes_p1.len() - 1 {self.curr_scene_index_p1 += 1;}
+                    else { self.curr_scene_index_p1 = 0; retval = SceneReturn::Finished;}
+                },
+                PlayerType::Player2 => {
+                    if self.curr_scene_index_p2 < self.outro_scenes_p2.len() - 1 {self.curr_scene_index_p2 += 1;}
+                    else { self.curr_scene_index_p2 = 0; retval = SceneReturn::Finished;}
+                },
+            }
         }
 
         Ok(retval)
@@ -109,9 +131,21 @@ impl ElderOutro {
             Ok(())
         })?;
 
-        //Draw winners scenes
+        // Draw winners scenes
         match self.winner {
-            1 => {
+            PlayerType::Undetermined => {
+                self.outro_scenes_p0[self.curr_scene_index_p0].execute(|image| {
+                    window.draw_ex(
+                        &image.area()
+                            .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
+                        Img(&image),
+                        Transform::IDENTITY,
+                        1,
+                    );
+                    Ok(())
+                })?;
+            },
+            PlayerType::Player1 => {
                 self.outro_scenes_p1[self.curr_scene_index_p1].execute(|image| {
                     window.draw_ex(
                         &image.area()
@@ -123,7 +157,7 @@ impl ElderOutro {
                     Ok(())
                 })?;
             },
-            2 => {
+            PlayerType::Player2 => {
                 self.outro_scenes_p2[self.curr_scene_index_p2].execute(|image| {
                     window.draw_ex(
                         &image.area()
@@ -135,17 +169,26 @@ impl ElderOutro {
                     Ok(())
                 })?;
             },
-            _e => { if _e == 0{panic!("Unhandled player winner: {:?}, encountered in outro::draw, perhaps it was not set correctly?", _e)}
-                    else { panic!("Unhandled player winner: {:?}, encountered in outro::draw", _e) }
-                    }
         }
 
-        /// Draw label text
-        /// This should always render on top to show the state the game is in
+        // Draw enter button prompt.
+        self.enter_button.execute(|image| {
+            window.draw_ex(
+                &image.area()
+                    .translate((50 + 112, window.screen_size().y as i32 - 150 - 84)),
+                Img(&image),
+                Transform::IDENTITY,
+                2,
+            );
+            Ok(())
+        })?;
+
+        // Draw label text
+        // This should always render on top to show the state the game is in
         self.text.execute(|image| {
             window.draw_ex(
                 &image.area()
-                    .translate((2 + 64, window.screen_size().y as i32 - 30 - 84)),
+                    .translate((2 + 112, window.screen_size().y as i32 - 30 - 84)),
                 Img(&image),
                 Transform::IDENTITY,
                 2,
@@ -163,21 +206,10 @@ impl ElderOutro {
         Ok(())
     }
 
-    #[allow(unreachable_patterns, dead_code)]
-    pub fn set_winner(&mut self, winner: &u32) -> Result<()>{
-        match winner {
-
-            1 => {
-                self.winner = 1;
-                Ok(())
-            }
-            2 => {
-                self.winner = 2;
-                Ok(())
-            }
-            _x => {
-                panic!("Invalid winner set in ElderOutro::winner")
-            }
-        }
+    /// Sets the winner of the game
+    /// This can be called during game execution so do not panic! if a 0 is passed
+    pub fn set_winner(&mut self, winner: PlayerType) -> Result<()>{
+        self.winner = winner;
+        Ok(())
     }
 }

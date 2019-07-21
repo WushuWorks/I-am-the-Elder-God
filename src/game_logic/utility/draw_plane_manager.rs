@@ -28,13 +28,13 @@ impl PlaneManager{
     }
     ///Sets the next plane coordinate, and return
     pub fn next_z_plane(&mut self) -> u32 {
-        let retval = this.zplane;
-        this.z_plane += 1;
+        let retval = self.z_plane;
+        self.z_plane += 1;
         retval
     }
     ///Checks the next coordinate to be returned
     fn peek_next(self) -> u32 {
-        this.z_plane
+        self.z_plane
     }
 }
 

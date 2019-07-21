@@ -15,22 +15,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::game_logic::scene_type::SceneReturn;
+use crate::game_logic::scene_type::{SceneReturn, PlayerType};
 
 //Resources
 use quicksilver::prelude::*;
 
 pub struct ElderGame {
+    game_background: Asset<Image>,
     game_img: Asset<Image>,
-    item_img: Asset<Image>,
     text: Asset<Image>,
-    winner: u32,
+    winner: PlayerType,
 }
 
 impl ElderGame {
     /// Load the assets and initialise the game
     pub fn new() -> Result<Self> {
         let font_mononoki = "square.ttf";
+        let background = "GCSeamlessBackground800x600.png";
+        let i_am_the_elder_god = "IamtheElderGodGame-800x600.png";
+
 
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then( |font| {
@@ -40,15 +43,11 @@ impl ElderGame {
             )
         }));
 
-        //Image Load
-        let bob = Asset::new(Image::load("PngBob.png"));
-        let game_frame = Asset::new(Image::load("GameFrame800x600.png"));
-
         Ok(Self {
-            game_img: game_frame,
-            item_img: bob,
+            game_background: Asset::new(Image::load(background)),
+            game_img: Asset::new(Image::load(i_am_the_elder_god)),
             text: text_info,
-            winner: 0,
+            winner: PlayerType::Undetermined,
         })
     }
 
@@ -57,7 +56,16 @@ impl ElderGame {
         use ButtonState::*;
         let mut retval = SceneReturn::Good;
 
-        if window.keyboard()[Key::Return] == Pressed {
+        if window.keyboard()[Key::Key0] == Pressed {
+            self.winner = PlayerType::Undetermined;
+            retval = SceneReturn::Finished;
+        }
+        if window.keyboard()[Key::Key1] == Pressed {
+            self.winner = PlayerType::Player1;
+            retval = SceneReturn::Finished;
+        }
+        if window.keyboard()[Key::Key2] == Pressed {
+            self.winner = PlayerType::Player2;
             retval = SceneReturn::Finished;
         }
 
@@ -67,8 +75,8 @@ impl ElderGame {
     /// Draw stuff on the screen
     pub fn draw(&mut self, window: &mut Window) -> Result<()> {
 
-        // Draw the frame
-        self.game_img.execute(|image| {
+        // Draw the background
+        self.game_background.execute(|image| {
             window.draw(
                 &image
                     .area()
@@ -78,8 +86,8 @@ impl ElderGame {
             Ok(())
         })?;
 
-        // Draw bob
-        self.item_img.execute(|image| {
+        // Draw the frame
+        self.game_img.execute(|image| {
             window.draw(
                 &image
                     .area()
@@ -112,8 +120,7 @@ impl ElderGame {
 
     /// Special function that decides who is the winner of the game
     /// This should only be defined in a scene where a winner is relevant info, like a game
-    pub fn get_winner(&mut self)  -> Result<u32>{
-        self.winner = 1337;
+    pub fn get_winner(&mut self)  -> Result<PlayerType>{
         Ok(self.winner)
     }
 }

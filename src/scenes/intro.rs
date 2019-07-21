@@ -16,7 +16,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::game_logic::scene_type::SceneReturn;
-use crate::game_logic::utility::draw_plane_manager::PlaneManager;
+//use crate::game_logic::utility::draw_plane_manager::PlaneManager;
 
 //Resources
 use quicksilver::prelude::*;
@@ -25,6 +25,8 @@ pub struct ElderIntro {
     intro_background: Asset<Image>,
     intro_scenes: Vec<Asset<Image>>,
     curr_scene_index: usize,
+
+    enter_button: Asset<Image>,
     text: Asset<Image>,
 }
 
@@ -34,6 +36,7 @@ impl ElderIntro {
     pub fn new() -> Result<Self> {
         let font_mononoki = "square.ttf";
         let intro_background = "GCSeamlessBackground800x600.png";
+        let enter = "Enter-120x90.png";
         //I declare like this because it is a sensible way to organize arbitrary ordered images
         let intro_scene1 = "FrameSplash1-800x600.png";
         let intro_scene2 = "FrameSplash2-800x600.png";
@@ -58,6 +61,8 @@ impl ElderIntro {
             intro_background: Asset::new(Image::load(intro_background)),
             intro_scenes: scenes,
             curr_scene_index: 0,
+
+            enter_button: Asset::new(Image::load(enter)),
             text: text_info,
         })
     }
@@ -94,9 +99,9 @@ impl ElderIntro {
             Ok(())
         })?;
 
-        /// Draws the selected scene
-        /// note that we draw scenes here and explicitly set the z coordinate, so anything
-        /// to be rendered above this must have an explicitly higher z value
+        // Draws the selected scene note that we draw scenes here and explicitly set the z coordinate
+        //
+        // ```window.draw_ex(draw: &Drawable, bkg: Into<Background<'a>>, trans: Transform, z: Scalar```
         self.intro_scenes[self.curr_scene_index].execute(|image| {
              window.draw_ex(
                     &image.area()
@@ -108,13 +113,23 @@ impl ElderIntro {
              Ok(())
         })?;
 
+        // Draw enter button prompt.
+        self.enter_button.execute(|image| {
+            window.draw_ex(
+                &image.area()
+                    .translate((60 + 112, window.screen_size().y as i32 - 180 - 84)),
+                Img(&image),
+                Transform::IDENTITY,
+                2,
+            );
+            Ok(())
+        })?;
 
-        /// Draw label text
-        /// This should always render on top to show the state the game is in
+        // Draw label text, This should always render on top to show the state the game is in
         self.text.execute(|image| {
             window.draw_ex(
                 &image.area()
-                    .translate((2 + 64, window.screen_size().y as i32 - 30 - 84)),
+                    .translate((2 + 112, window.screen_size().y as i32 - 30 - 84)),
                 Img(&image),
                 Transform::IDENTITY,
                 2,

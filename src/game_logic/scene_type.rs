@@ -34,3 +34,10 @@ pub enum SceneReturn {
     Finished,
 //    Err(String),
 }
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum PlayerType {
+    Player1,
+    Player2,
+    Undetermined,
+}

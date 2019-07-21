@@ -44,9 +44,6 @@ pub struct Game {
     //Large Files
     overlay: Asset<Image>,
     bg_music: Asset<Sound>,
-
-    //Game Winner
-    winner: u32,
 }
 
 impl State for Game {
@@ -79,8 +76,6 @@ impl State for Game {
             //Large Files
             overlay: game_overlay,
             bg_music: music,
-
-            winner: 0,
         })
     }
 
@@ -91,7 +86,7 @@ impl State for Game {
             SceneType::Intro     => self.intro_scenes.update(window)?,
             SceneType::Game      => {
                 let scene_retval = self.game_scenes.update(window)?;
-                self.winner = self.game_scenes.get_winner()?;
+                self.outro_scenes.set_winner(self.game_scenes.get_winner()?)?;
                 scene_retval
             },
             SceneType::Outro     => {
