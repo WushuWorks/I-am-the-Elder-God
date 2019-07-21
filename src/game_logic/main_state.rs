@@ -16,7 +16,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 /*
-Here we define the overarching 'Game' which contains all of its sub-components and is the core loop
+Here we define the overarching 'Game' which contains all of its sub-components and is the core loop.
 */
 
 use crate::game_logic::scene_type::{SceneType, SceneReturn};
@@ -44,12 +44,8 @@ pub struct Game {
     //Large Files
     overlay: Asset<Image>,
     bg_music: Asset<Sound>,
-
-    //Game Winner
-    winner: u32,
 }
 
-#[allow(unreachable_patterns, dead_code)]
 impl State for Game {
     /// Load the assets and initialise the game
     fn new() -> Result<Self> {
@@ -80,8 +76,6 @@ impl State for Game {
             //Large Files
             overlay: game_overlay,
             bg_music: music,
-
-            winner: 0,
         })
     }
 
@@ -92,7 +86,7 @@ impl State for Game {
             SceneType::Intro     => self.intro_scenes.update(window)?,
             SceneType::Game      => {
                 let scene_retval = self.game_scenes.update(window)?;
-                self.winner = self.game_scenes.get_winner()?;
+                self.outro_scenes.set_winner(self.game_scenes.get_winner()?)?;
                 scene_retval
             },
             SceneType::Outro     => {
@@ -125,6 +119,7 @@ impl State for Game {
     ///
     fn draw(&mut self, window: &mut Window) -> Result<()> {
         window.clear(Color::WHITE)?;
+
         //Draw overlay first to put it on the bottom.
         self.overlay.execute(|image| {
             window.draw(
@@ -144,10 +139,7 @@ impl State for Game {
             _                    => panic!("Unhandled scene type {:?} encountered in MainState draw.", self.curr_scene),
         };
 
-
         retval
     }
-
-
 
 }
