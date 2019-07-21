@@ -23,4 +23,3 @@ level.
 
 pub mod main_state;
 pub mod scene_type;
-pub mod utility;

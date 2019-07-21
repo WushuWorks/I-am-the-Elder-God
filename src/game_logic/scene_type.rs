@@ -41,3 +41,6 @@ pub enum PlayerType {
     Player2,
     Undetermined,
 }
+
+// I should probably define a player struct with a PlayerType and other stuff in it
+// and then I can pass the two players' data as a tuple to summarize in outro with a winner PlayerType

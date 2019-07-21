@@ -16,7 +16,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::game_logic::scene_type::SceneReturn;
-//use crate::game_logic::utility::draw_plane_manager::PlaneManager;
 
 //Resources
 use quicksilver::prelude::*;
