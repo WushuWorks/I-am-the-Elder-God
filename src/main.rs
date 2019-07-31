@@ -1,14 +1,13 @@
 
 //Declare as 'use'able modules
 mod game_logic;
+mod gameplay_logic;
 mod scenes;
 
 use game_logic::main_state::Game;
 
 //Resources
 use quicksilver::prelude::*;
-//use ncollide2d::shape::*;
-//use nalgebra::Vector2;
 
 fn main() {
 

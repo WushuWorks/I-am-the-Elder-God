@@ -1,5 +1,5 @@
 use crate::game_logic::scene_type::{SceneReturn, PlayerType};
-
+use crate::gameplay_logic::game_board::GameBoard;
 //Resources
 use quicksilver::prelude::*;
 
@@ -7,6 +7,9 @@ pub struct ElderGame {
     game_background: Asset<Image>,
     game_img: Asset<Image>,
     text: Asset<Image>,
+
+    game_board: GameBoard,
+
     winner: PlayerType,
 }
 
@@ -15,8 +18,7 @@ impl ElderGame {
     pub fn new() -> Result<Self> {
         let font_mononoki = "square.ttf";
         let background = "GCSeamlessBackground800x600.png";
-        let i_am_the_elder_god = "IamtheElderGodGame-800x600.png";
-
+        let i_am_the_elder_god = "GameBoard800x600.png";
 
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then( |font| {
@@ -30,6 +32,9 @@ impl ElderGame {
             game_background: Asset::new(Image::load(background)),
             game_img: Asset::new(Image::load(i_am_the_elder_god)),
             text: text_info,
+
+            game_board: GameBoard::new().expect("Failed to load GameBoard in scenes::game::ElderGame::new"),
+
             winner: PlayerType::Undetermined,
         })
     }

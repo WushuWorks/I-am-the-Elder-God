@@ -16,7 +16,6 @@ pub enum SceneType {
 pub enum SceneReturn {
     Good,
     Finished,
-//    Err(String),
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
