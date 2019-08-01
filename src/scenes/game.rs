@@ -25,7 +25,6 @@ impl ElderGame {
         //game_board assets
         let letter_tilesheet = "LetterTilesheet.png";
 
-
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then( |font| {
             font.render(
@@ -93,7 +92,13 @@ impl ElderGame {
         })?;
 
         // Draw GameBoard
-        
+        self.game_tiles.execute(|image| {
+            window.draw(
+                &image.get("A").expect("nooooo").unwrap_image().area(),
+                Img(&image.get("A").expect("nooooo").unwrap_image()),
+            );
+            Ok(())
+        })?;
 
         // Draw text
         self.text.execute(|image| {
