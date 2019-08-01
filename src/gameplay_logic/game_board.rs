@@ -1,5 +1,6 @@
 /*
 This is the environment layer, which models the board that the other layers sit on top of
+and supports logic to render its own state
 */
 
 use quicksilver::prelude::*;
@@ -40,6 +41,7 @@ pub struct Cell {
 /// The GameBoard is the environment that contains a 2d array of Cells.
 pub struct GameBoard {
     board: Vec<Cell>,
+
 }
 
 impl GameBoard {
