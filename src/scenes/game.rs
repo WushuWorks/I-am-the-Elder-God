@@ -23,7 +23,7 @@ impl ElderGame {
         let background = "GCSeamlessBackground800x600.png";
         let i_am_the_elder_god = "GameBoard800x600.png";
         //game_board assets
-        let letter_tilesheet = "LetterTilesheet.png";
+        let atlas_index = "Atlas_Tile_Index";
 
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then( |font| {
@@ -39,7 +39,7 @@ impl ElderGame {
             text: text_info,
 
             game_board: GameBoard::new().expect("Failed to load GameBoard in scenes::game::ElderGame::new"),
-            game_tiles: Asset::new(Atlas::load(letter_tilesheet)),
+            game_tiles: Asset::new(Atlas::load(atlas_index)),
 
             winner: PlayerType::Undetermined,
         })
@@ -92,14 +92,17 @@ impl ElderGame {
         })?;
 
         // Draw GameBoard
-        self.game_tiles.execute(|image| {
-            window.draw(
-                &image.get("A").expect("nooooo").unwrap_image().area(),
-                Img(&image.get("A").expect("nooooo").unwrap_image()),
-            );
-            Ok(())
-        })?;
-
+        for cell in self.game_board.get_board().unwrap() {
+            let tile = cell.get_land();
+            self.game_tiles.execute(|image| {
+                window.draw(
+                    &image.get("A").expect("nooooo").unwrap_image().area()
+                        .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
+                    Img(&image.get("A").expect("nooooo").unwrap_image()),
+                );
+                Ok(())
+            })?;
+        }
         // Draw text
         self.text.execute(|image| {
             window.draw(

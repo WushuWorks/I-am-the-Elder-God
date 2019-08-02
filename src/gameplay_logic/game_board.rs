@@ -38,10 +38,15 @@ pub struct Cell {
     condition: TerrainStatus,
 }
 
+impl Cell{
+    pub fn get_land(&self) -> Result<&Terrain>{
+        Ok(&self.land)
+    }
+}
+
 /// The GameBoard is the environment that contains a 2d array of Cells.
 pub struct GameBoard {
     board: Vec<Cell>,
-
 }
 
 impl GameBoard {
@@ -50,5 +55,9 @@ impl GameBoard {
         Ok(Self{
             board: generate_map(Vector::new(13.0, 13.0))
         })
+    }
+
+    pub fn get_board(&self) ->Result<&Vec<Cell>>{
+        Ok(&self.board)
     }
 }

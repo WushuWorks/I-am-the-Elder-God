@@ -3,6 +3,7 @@ This defines the various enum elements that are a part of gameplay data
 */
 
 ///The types of lands
+#[derive(Debug, PartialEq, Clone, Copy)]
 #[allow(unused)]
 pub enum Terrain {
     Road,
@@ -16,6 +17,7 @@ pub enum Terrain {
 }
 
 ///The conditions a land can be in
+#[derive(Debug, PartialEq, Clone, Copy)]
 #[allow(unused)]
 pub enum TerrainStatus {
     Normal,
