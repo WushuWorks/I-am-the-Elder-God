@@ -11,6 +11,7 @@ use crate::scenes::outro::ElderOutro;
 
 //Resources
 use quicksilver::prelude::*;
+use quicksilver::graphics::Atlas;
 //Std imports
 use std::vec::IntoIter;
 use std::iter::Cycle;
@@ -78,7 +79,6 @@ impl State for Game {
             SceneType::Outro     => {
                 self.outro_scenes.update(window)?
             },
-            _                    => panic!("Unhandled scene type {:?} encountered in MainState update.", self.curr_scene),
         };
 
         match scene_flag {
@@ -105,29 +105,63 @@ impl State for Game {
     ///
     fn draw(&mut self, window: &mut Window) -> Result<()> {
         window.clear(Color::WHITE)?;
+        let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
         //See music_player.rs for reasoning
         self.bg_music.play_if_not(window.current_fps())?;
 
         //Draw overlay first to put it on the bottom.
-        self.overlay.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
+        draw_with_center(window, &mut self.overlay, window_center)?;
 
         //Result is passed up
         let retval = match self.curr_scene {
             SceneType::Intro     => self.intro_scenes.draw(window),
             SceneType::Game      => self.game_scenes.draw(window),
             SceneType::Outro     => self.outro_scenes.draw(window),
-            _                    => panic!("Unhandled scene type {:?} encountered in MainState draw.", self.curr_scene),
         };
 
         retval
     }
 
+
 }
+
+/// Draws a standard image from the center to the passed vector
+pub fn draw_with_center(window: &mut Window, image: &mut Asset<Image>, coordinate: Vector) -> Result<()> {
+    image.execute(|image| {
+        window.draw(
+            &image
+                .area()
+                .with_center((coordinate.x, coordinate.y)),
+            Img(&image),
+        );
+        Ok(())
+    })?;
+    Ok(())
+}
+
+///Draws an image by translate
+pub fn draw_translate(window: &mut Window, image: &mut Asset<Image>, coordinate: Vector) -> Result<()> {
+    image.execute(|image| {
+        window.draw(
+            &image.area()
+                .translate((coordinate.x, coordinate.y)),
+            Img(&image),
+        );
+        Ok(())
+    })?;
+    Ok(())
+}
+
+///Draws something from an Atlas at the given coordinates
+pub fn draw_atlas_with_center (window: &mut Window, atlas: &mut Asset<Atlas>, coordinate: Vector, key: &str) -> Result<()> {
+    atlas.execute(|image| {
+        window.draw(
+            &image.get(key).expect("Failed to find key in draw").unwrap_image().area()
+                .with_center((coordinate.x, coordinate.y)),
+            Img(&image.get(key).expect("Failed to find key in draw").unwrap_image()),
+        );
+        Ok(())
+    })?;
+    Ok(())
+}
+

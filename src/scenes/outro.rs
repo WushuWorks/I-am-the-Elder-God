@@ -1,4 +1,5 @@
 use crate::game_logic::scene_type::{SceneReturn, PlayerType};
+use crate::game_logic::main_state::{draw_with_center, draw_translate, draw_atlas_with_center};
 
 //Resource
 use quicksilver::prelude::*;
@@ -71,29 +72,11 @@ impl ElderOutro {
     pub fn draw(&mut self, window: &mut Window) -> Result<()> {
         let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
 
-        // Draw the frame
-        self.outro_background.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .with_center((window_center.x, window_center.y)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
+        // Draw the frame and overlay
+        draw_with_center(window, &mut self.outro_background, window_center)?;
+        draw_with_center(window, &mut self.outro_overlay, window_center)?;
 
-        // Draw the background
-        self.outro_overlay.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .with_center((window_center.x, window_center.y)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
-
-        // Draw winners scenes
+        // Draw winner's scenes
         let atlas_key = *match self.winner {
                 PlayerType::Undetermined => ["P0_First", "P0_Second", "P0_Third", "P0_Fourth"]
                     .get(self.curr_scene_index)
@@ -105,40 +88,13 @@ impl ElderOutro {
                     .get(self.curr_scene_index)
                     .expect("Unhandled scene index in P2 outro::draw"),
             };
-
-        self.outro_scenes.execute(|image| {
-            window.draw(
-                &image.get(atlas_key).expect("Failed to find key in outro::draw").unwrap_image().area()
-                    .with_center((window_center.x, window_center.y)),
-                Img(&image.get(atlas_key).expect("Failed to find key in outro::draw").unwrap_image()),
-            );
-            Ok(())
-        })?;
+        draw_atlas_with_center(window, &mut self.outro_scenes, window_center, atlas_key)?;
 
         // Draw enter button prompt.
-        self.enter_button.execute(|image| {
-            window.draw_ex(
-                &image.area()
-                    .translate((50 + 112, window.screen_size().y as i32 - 150 - 84)),
-                Img(&image),
-                Transform::IDENTITY,
-                2,
-            );
-            Ok(())
-        })?;
+        draw_translate(window, &mut self.enter_button, Vector::new(50 + 112, window.screen_size().y as i32 - 150 - 84))?;
 
-        // Draw label text
-        // This should always render on top to show the state the game is in
-        self.text.execute(|image| {
-            window.draw_ex(
-                &image.area()
-                    .with_center((window_center.x, window_center.y + 286.0)),
-                Img(&image),
-                Transform::IDENTITY,
-                2,
-            );
-            Ok(())
-        })?;
+        // Draw label text, should always render on top to show the state the game is in
+        draw_with_center(window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0))?;
 
         Ok(())
     }

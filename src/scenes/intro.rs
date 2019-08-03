@@ -1,4 +1,7 @@
+//This is the intro scene, to set up the game
+
 use crate::game_logic::scene_type::SceneReturn;
+use crate::game_logic::main_state::{draw_with_center, draw_translate, draw_atlas_with_center};
 
 //Resources
 use quicksilver::prelude::*;
@@ -70,64 +73,20 @@ impl ElderIntro {
         let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
 
         // Draw the background
-        self.intro_background.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .with_center((window_center.x, window_center.y)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
-
-        // Draw the background
-        self.intro_overlay.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .with_center((window_center.x, window_center.y)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
+        draw_with_center(window, &mut self.intro_background, window_center)?;
 
         // Draws the selected scene with an atlas
         let atlas_key =  ["First", "Second", "Third", "Fourth"]
             .get(self.curr_scene_index)
             .expect("Unhandled scene index in intro::draw");
-
-        self.intro_scenes.execute(|image| {
-            window.draw(
-                &image.get(atlas_key).expect("Failed to find key in intro::draw").unwrap_image().area()
-                    .with_center((window_center.x, window_center.y)),
-                Img(&image.get(atlas_key).expect("Failed to find key in intro::draw").unwrap_image()),
-            );
-            Ok(())
-        })?;
+        draw_atlas_with_center (window, &mut self.intro_scenes, window_center, atlas_key)?;
 
         // Draw enter button prompt.
-        self.enter_button.execute(|image| {
-            window.draw_ex(
-                &image.area()
-                    .translate((60 + 112, window.screen_size().y as i32 - 180 - 84)),
-                Img(&image),
-                Transform::IDENTITY,
-                2,
-            );
-            Ok(())
-        })?;
+        draw_translate (window, &mut self.enter_button, Vector::new(60 + 112, window.screen_size().y as i32 - 180 - 84))?;
 
-        // Draw label text, This should always render on top to show the state the game is in
-        self.text.execute(|image| {
-            window.draw_ex(
-                &image.area()
-                    .with_center((window_center.x, window_center.y + 286.0)),
-                Img(&image),
-                Transform::IDENTITY,
-                2,
-            );
-            Ok(())
-        })?;
+        // Draw label text and overlay, label text should always render on top to show the state the game is in
+        draw_with_center (window, &mut self.intro_overlay, window_center)?;
+        draw_with_center (window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0))?;
 
         Ok(())
 

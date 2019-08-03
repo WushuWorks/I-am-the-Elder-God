@@ -1,5 +1,6 @@
 /*
 This defines the various enum elements that are a part of gameplay data
+and provides functions to translate data to Atlas_Tile_Index keys
 */
 
 ///The types of lands
@@ -31,7 +32,6 @@ impl Terrain{
         }
     }
 }
-
 /// Translates a key string to a Terrain enum if possible, returns None if not found
 pub fn to_terrain( key: &str) -> Option<Terrain> {
     match key {
@@ -57,18 +57,6 @@ pub enum TerrainStatus {
     Impassable,
 }
 
-impl TerrainStatus {
-    ///Translates a TerrainStatus enum to a str key, returns None if not found (this should never happen though)
-    pub fn key(&self) -> Option<&str> {
-        match self {
-            TerrainStatus::Normal     => Some("N"),
-            TerrainStatus::Burning    => Some("B"),
-            TerrainStatus::Frozen     => Some("F"),
-            TerrainStatus::Shielded   => Some("S"),
-            TerrainStatus::Impassable => Some("-"),
-        }
-    }
-}
 
 /// Translates a key string to a TerrainStatus enum if possible, returns None if not found
 pub fn to_condition(key: &str) -> Option<TerrainStatus> {
@@ -81,3 +69,20 @@ pub fn to_condition(key: &str) -> Option<TerrainStatus> {
         _       => None,
     }
 }
+
+/* Here in case I remember why I wanted it
+
+
+impl TerrainStatus {
+    ///Translates a TerrainStatus enum to a str key, returns None if not found (this should never happen though)
+    pub fn key(&self) -> Option<&str> {
+        match self {
+            TerrainStatus::Normal     => Some("N"),
+            TerrainStatus::Burning    => Some("B"),
+            TerrainStatus::Frozen     => Some("F"),
+            TerrainStatus::Shielded   => Some("S"),
+            TerrainStatus::Impassable => Some("-"),
+        }
+    }
+}
+*/

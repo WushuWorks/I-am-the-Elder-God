@@ -1,5 +1,7 @@
 use crate::game_logic::scene_type::{SceneReturn, PlayerType};
 use crate::gameplay_logic::game_board::GameBoard;
+use crate::game_logic::main_state::{draw_with_center, draw_translate, draw_atlas_with_center};
+
 //Resources
 use quicksilver::prelude::*;
 use quicksilver::graphics::Atlas;
@@ -70,52 +72,22 @@ impl ElderGame {
     pub fn draw(&mut self, window: &mut Window) -> Result<()> {
         let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
 
-        // Draw the background
-        self.game_background.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .with_center((window_center.x, window_center.y)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
-
-        //Draw Overlay
-        self.game_overlay.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .with_center((window_center.x, window_center.y)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
+        // Draw the frame and overlay
+        draw_with_center(window, &mut self.game_background, window_center)?;
+        draw_with_center(window, &mut self.game_overlay, window_center)?;
 
         // Draw GameBoard, calculates coordinates from the center for a 19x15 board of 40x40 pixels
         for cell in self.game_board.get_board().unwrap() {
             let tile_key = cell.get_land().expect("Failed to get Terrain game::draw").key().expect("No known key for tile.");
             let pos = cell.get_pos().expect("Failed to get cell position game::draw");
 
-            self.game_tiles.execute(|image| {
-                window.draw(
-                    &image.get(tile_key).expect("Failed to find key in game::draw").unwrap_image().area()
-                        .with_center((window_center.x - 380.0 + (40.0 * pos.x) + 20.0, window_center.y - 300.0 + (40.0 * pos.y) + 20.0)),
-                    Img(&image.get(tile_key).expect("Failed to find key in game::draw").unwrap_image()),
-                );
-                Ok(())
-            })?;
+            draw_atlas_with_center(window, &mut self.game_tiles,
+                                   Vector::new(window_center.x - 380.0 + (40.0 * pos.x) + 20.0,
+                                                         window_center.y - 300.0 + (40.0 * pos.y) + 20.0), tile_key)?;
         }
-        // Draw text
-        self.text.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .with_center((window_center.x, window_center.y + 286.0)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
+
+        // Draw label text, should always render on top to show the state the game is in
+        draw_with_center(window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0))?;
 
         Ok(())
     }
