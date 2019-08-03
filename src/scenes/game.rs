@@ -1,6 +1,6 @@
 use crate::game_logic::scene_type::{SceneReturn, PlayerType};
 use crate::gameplay_logic::game_board::GameBoard;
-use crate::game_logic::main_state::{draw_with_center, draw_translate, draw_atlas_with_center};
+use crate::game_logic::main_state::{draw_with_center, draw_atlas_with_center};
 
 //Resources
 use quicksilver::prelude::*;
