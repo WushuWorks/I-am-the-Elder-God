@@ -6,6 +6,7 @@ use quicksilver::graphics::Atlas;
 
 pub struct ElderGame {
     game_background: Asset<Image>,
+    game_overlay: Asset<Image>,
     text: Asset<Image>,
 
     //game_board layer
@@ -20,19 +21,21 @@ impl ElderGame {
     /// Load the assets and initialise the game
     pub fn new() -> Result<Self> {
         let font_mononoki = "square.ttf";
-        let background = "GCSeamlessBackground800x600.png";
+        let background = "Fog800x600.png";
+        let overlay = "PHOverlayFade.png";
         let atlas_index = "Atlas_Tile_Index";
 
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then( |font| {
             font.render(
-                "Square font am I, game this is.",
+                "WASD - move, 1/2/0 - end",
                 &FontStyle::new(20.0, Color::BLACK),
             )
         }));
 
         Ok(Self {
             game_background: Asset::new(Image::load(background)),
+            game_overlay: Asset::new(Image::load(overlay)),
             text: text_info,
 
             game_board: GameBoard::new().expect("Failed to load GameBoard in scenes::game::ElderGame::new"),
@@ -78,6 +81,17 @@ impl ElderGame {
             Ok(())
         })?;
 
+        //Draw Overlay
+        self.game_overlay.execute(|image| {
+            window.draw(
+                &image
+                    .area()
+                    .with_center((window_center.x, window_center.y)),
+                Img(&image),
+            );
+            Ok(())
+        })?;
+
         // Draw GameBoard, calculates coordinates from the center for a 19x15 board of 40x40 pixels
         for cell in self.game_board.get_board().unwrap() {
             let tile_key = cell.get_land().expect("Failed to get Terrain game::draw").key().expect("No known key for tile.");
@@ -97,7 +111,7 @@ impl ElderGame {
             window.draw(
                 &image
                     .area()
-                    .translate((2 + 112, window.screen_size().y as i32 - 30 - 84)),
+                    .with_center((window_center.x, window_center.y + 286.0)),
                 Img(&image),
             );
             Ok(())

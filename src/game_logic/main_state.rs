@@ -43,7 +43,7 @@ impl State for Game {
         //Large/universal data allocations, waste not want not
         let music = MusicPlayer::new("vgm21.wav", 19.0, 1.0)
             .expect("Cannot initialize MusicPlayer in main_state::new");
-        let game_overlay = Asset::new(Image::load("FrameBorder1024x768.png"));
+        let game_overlay = Asset::new(Image::load("PHOverlay.png"));
 
         //Scene order allocation, this defines the order of states
         let scenes: Vec<SceneType> = vec![SceneType::Intro, SceneType::Game, SceneType::Outro];

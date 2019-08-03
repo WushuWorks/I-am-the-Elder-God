@@ -4,10 +4,11 @@ use crate::game_logic::scene_type::{SceneReturn, PlayerType};
 use quicksilver::prelude::*;
 use quicksilver::graphics::Atlas;
 
-
 #[allow(unreachable_patterns, dead_code)]
 pub struct ElderOutro {
     outro_background: Asset<Image>,
+    outro_overlay: Asset<Image>,
+
     outro_scenes: Asset<Atlas>,
     curr_scene_index: usize,
     max_scenes: usize,
@@ -22,7 +23,8 @@ impl ElderOutro {
     /// Load the assets and initialise the game
     pub fn new() -> Result<Self> {
         let font_mononoki = "square.ttf";
-        let background = "GCSeamlessBackground800x600.png";
+        let background = "PHGameBackground.png";
+        let overlay = "PHOverlayFade.png";
         let enter = "Enter-120x90.png";
         //I declare like this because it is a sensible way to organize arbitrary ordered images
         let atlas_index = "Atlas_Outro_Index";
@@ -30,13 +32,15 @@ impl ElderOutro {
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then( |font| {
             font.render(
-                "Square font am I, outro this is.",
+                "You are in the outro.",
                 &FontStyle::new(20.0, Color::BLACK),
             )
         }));
 
         Ok(Self {
             outro_background: Asset::new(Image::load(background)),
+            outro_overlay: Asset::new(Image::load(overlay)),
+
             outro_scenes: Asset::new(Atlas::load(atlas_index)),
             curr_scene_index: 0,
             max_scenes: 4,
@@ -65,13 +69,25 @@ impl ElderOutro {
 
     /// Draw stuff on the screen
     pub fn draw(&mut self, window: &mut Window) -> Result<()> {
+        let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
 
         // Draw the frame
         self.outro_background.execute(|image| {
             window.draw(
                 &image
                     .area()
-                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
+                    .with_center((window_center.x, window_center.y)),
+                Img(&image),
+            );
+            Ok(())
+        })?;
+
+        // Draw the background
+        self.outro_overlay.execute(|image| {
+            window.draw(
+                &image
+                    .area()
+                    .with_center((window_center.x, window_center.y)),
                 Img(&image),
             );
             Ok(())
@@ -93,7 +109,7 @@ impl ElderOutro {
         self.outro_scenes.execute(|image| {
             window.draw(
                 &image.get(atlas_key).expect("Failed to find key in outro::draw").unwrap_image().area()
-                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
+                    .with_center((window_center.x, window_center.y)),
                 Img(&image.get(atlas_key).expect("Failed to find key in outro::draw").unwrap_image()),
             );
             Ok(())
@@ -116,7 +132,7 @@ impl ElderOutro {
         self.text.execute(|image| {
             window.draw_ex(
                 &image.area()
-                    .translate((2 + 112, window.screen_size().y as i32 - 30 - 84)),
+                    .with_center((window_center.x, window_center.y + 286.0)),
                 Img(&image),
                 Transform::IDENTITY,
                 2,
