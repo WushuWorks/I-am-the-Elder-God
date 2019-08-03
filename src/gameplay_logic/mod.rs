@@ -9,3 +9,4 @@ level.
 ///Logic that manages the games board
 pub mod game_board;
 pub mod gameplay_type;
+pub mod game_levels;

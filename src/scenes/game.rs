@@ -11,6 +11,7 @@ pub struct ElderGame {
 
     //game_board layer
     game_board: GameBoard,
+    //Atlas supports keys A-Z, Blank (# is the same tile), and Null (with the '-' key)
     game_tiles: Asset<Atlas>,
 
     winner: PlayerType,
@@ -68,13 +69,14 @@ impl ElderGame {
 
     /// Draw stuff on the screen
     pub fn draw(&mut self, window: &mut Window) -> Result<()> {
+        let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
 
         // Draw the background
         self.game_background.execute(|image| {
             window.draw(
                 &image
                     .area()
-                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
+                    .with_center((window_center.x, window_center.y)),
                 Img(&image),
             );
             Ok(())
@@ -85,20 +87,22 @@ impl ElderGame {
             window.draw(
                 &image
                     .area()
-                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
+                    .with_center((window_center.x, window_center.y)),
                 Img(&image),
             );
             Ok(())
         })?;
 
-        // Draw GameBoard
+        // Draw GameBoard, calculates coordinates from the center for a 19x15 board of 40x40 pixels
         for cell in self.game_board.get_board().unwrap() {
-            let tile = cell.get_land();
+            let tile_key = cell.get_land().expect("Failed to get Terrain game::draw").key().expect("No known key for tile.");
+            let pos = cell.get_pos().expect("Failed to get cell position game::draw");
+
             self.game_tiles.execute(|image| {
                 window.draw(
-                    &image.get("A").expect("nooooo").unwrap_image().area()
-                        .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
-                    Img(&image.get("A").expect("nooooo").unwrap_image()),
+                    &image.get(tile_key).expect("Failed to find key in game::draw").unwrap_image().area()
+                        .with_center((window_center.x - 380.0 + (40.0 * pos.x) + 20.0, window_center.y - 300.0 + (40.0 * pos.y) + 20.0)),
+                    Img(&image.get(tile_key).expect("Failed to find key in game::draw").unwrap_image()),
                 );
                 Ok(())
             })?;
