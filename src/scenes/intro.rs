@@ -2,11 +2,13 @@ use crate::game_logic::scene_type::SceneReturn;
 
 //Resources
 use quicksilver::prelude::*;
+use quicksilver::graphics::Atlas;
 
 pub struct ElderIntro {
     intro_background: Asset<Image>,
-    intro_scenes: Vec<Asset<Image>>,
+    intro_scenes: Asset<Atlas>,
     curr_scene_index: usize,
+    max_scenes: usize,
 
     enter_button: Asset<Image>,
     text: Asset<Image>,
@@ -19,16 +21,7 @@ impl ElderIntro {
         let font_mononoki = "square.ttf";
         let intro_background = "GCSeamlessBackground800x600.png";
         let enter = "Enter-120x90.png";
-        //I declare like this because it is a sensible way to organize arbitrary ordered images
-        let intro_scene1 = "FrameSplash1-800x600.png";
-        let intro_scene2 = "FrameSplash2-800x600.png";
-        let intro_scene3 = "FrameSplash3-800x600.png";
-        let intro_scene4 = "FrameSplash4-800x600.png";
-        //Declared here so we can get the length below
-        let scenes = vec![Asset::new(Image::load(intro_scene1)),
-                                            Asset::new(Image::load(intro_scene2)),
-                                            Asset::new(Image::load(intro_scene3)),
-                                            Asset::new(Image::load(intro_scene4))];
+        let atlas_index = "Atlas_Intro_Index";
 
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then( |font| {
@@ -38,11 +31,11 @@ impl ElderIntro {
             )
         }));
 
-
         Ok(Self {
             intro_background: Asset::new(Image::load(intro_background)),
-            intro_scenes: scenes,
+            intro_scenes: Asset::new(Atlas::load(atlas_index)),
             curr_scene_index: 0,
+            max_scenes: 4,
 
             enter_button: Asset::new(Image::load(enter)),
             text: text_info,
@@ -55,7 +48,7 @@ impl ElderIntro {
         let mut retval = SceneReturn::Good;
 
         if window.keyboard()[Key::Return] == Pressed {
-            if self.curr_scene_index < self.intro_scenes.len() - 1 {
+            if self.curr_scene_index < self.max_scenes - 1 {
                 self.curr_scene_index += 1;
             } else {
                 self.curr_scene_index = 0;
@@ -81,18 +74,18 @@ impl ElderIntro {
             Ok(())
         })?;
 
-        // Draws the selected scene note that we draw scenes here and explicitly set the z coordinate
-        //
-        // ```window.draw_ex(draw: &Drawable, bkg: Into<Background<'a>>, trans: Transform, z: Scalar```
-        self.intro_scenes[self.curr_scene_index].execute(|image| {
-             window.draw_ex(
-                    &image.area()
-                        .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
-                    Img(&image),
-                 Transform::IDENTITY,
-                 1,
-             );
-             Ok(())
+        // Draws the selected scene with an atlas
+        let atlas_key =  ["First", "Second", "Third", "Fourth"]
+            .get(self.curr_scene_index)
+            .expect("Unhandled scene index in intro::draw");
+
+        self.intro_scenes.execute(|image| {
+            window.draw(
+                &image.get(atlas_key).expect("Failed to find key in intro::draw").unwrap_image().area()
+                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
+                Img(&image.get(atlas_key).expect("Failed to find key in intro::draw").unwrap_image()),
+            );
+            Ok(())
         })?;
 
         // Draw enter button prompt.

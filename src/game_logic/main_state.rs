@@ -4,6 +4,7 @@ Here we define the overarching 'Game' which contains all of its sub-components a
 */
 
 use crate::game_logic::scene_type::{SceneType, SceneReturn};
+use crate::game_logic::music_player::MusicPlayer;
 use crate::scenes::game::ElderGame;
 use crate::scenes::intro::ElderIntro;
 use crate::scenes::outro::ElderOutro;
@@ -27,7 +28,7 @@ pub struct Game {
 
     //Large Files
     overlay: Asset<Image>,
-    bg_music: Asset<Sound>,
+    bg_music: MusicPlayer,
 }
 
 impl State for Game {
@@ -40,7 +41,8 @@ impl State for Game {
         let outro = ElderOutro::new().expect("Cannot load Elder Outro");
 
         //Large/universal data allocations, waste not want not
-        let music = Asset::new( Sound::load("vgm21.wav"));
+        let music = MusicPlayer::new("vgm21.wav", 19.0, 1.0)
+            .expect("Cannot initialize MusicPlayer in main_state::new");
         let game_overlay = Asset::new(Image::load("FrameBorder1024x768.png"));
 
         //Scene order allocation, this defines the order of states
@@ -103,6 +105,8 @@ impl State for Game {
     ///
     fn draw(&mut self, window: &mut Window) -> Result<()> {
         window.clear(Color::WHITE)?;
+        //See music_player.rs for reasoning
+        self.bg_music.play_if_not(window.current_fps())?;
 
         //Draw overlay first to put it on the bottom.
         self.overlay.execute(|image| {

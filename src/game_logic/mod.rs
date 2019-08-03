@@ -11,3 +11,5 @@ level.
 pub mod main_state;
 /// Contains information about Scenes and their types
 pub mod scene_type;
+/// Plays music with a system dependant on the fps in draw calls
+pub mod music_player;

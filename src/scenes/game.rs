@@ -6,7 +6,6 @@ use quicksilver::graphics::Atlas;
 
 pub struct ElderGame {
     game_background: Asset<Image>,
-    game_img: Asset<Image>,
     text: Asset<Image>,
 
     //game_board layer
@@ -22,8 +21,6 @@ impl ElderGame {
     pub fn new() -> Result<Self> {
         let font_mononoki = "square.ttf";
         let background = "GCSeamlessBackground800x600.png";
-        let i_am_the_elder_god = "GameBoard800x600.png";
-        //game_board assets
         let atlas_index = "Atlas_Tile_Index";
 
         //Font Load
@@ -36,7 +33,6 @@ impl ElderGame {
 
         Ok(Self {
             game_background: Asset::new(Image::load(background)),
-            game_img: Asset::new(Image::load(i_am_the_elder_god)),
             text: text_info,
 
             game_board: GameBoard::new().expect("Failed to load GameBoard in scenes::game::ElderGame::new"),
@@ -73,17 +69,6 @@ impl ElderGame {
 
         // Draw the background
         self.game_background.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .with_center((window_center.x, window_center.y)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
-
-        // Draw the frame
-        self.game_img.execute(|image| {
             window.draw(
                 &image
                     .area()

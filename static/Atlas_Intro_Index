@@ -1,0 +1,33 @@
+ElderGodIntroSheet.png
+size: 3215,600
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+First
+ rotate: false
+ xy: 0, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+Second
+ rotate: false
+ xy: 805, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+Third
+ rotate: false
+ xy: 1610, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+Fourth
+ rotate: false
+ xy: 2415, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
