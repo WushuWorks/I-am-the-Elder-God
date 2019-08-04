@@ -1,4 +1,3 @@
-
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum SceneType {
     Intro,
@@ -10,11 +9,4 @@ pub enum SceneType {
 pub enum SceneReturn {
     Good,
     Finished,
-}
-
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum PlayerType {
-    Player1,
-    Player2,
-    Undetermined,
 }

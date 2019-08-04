@@ -1,4 +1,5 @@
-use crate::game_logic::scene_type::{SceneReturn, PlayerType};
+use crate::game_logic::scene_type::SceneReturn;
+use crate::gameplay_logic::entities::PlayerType;
 use crate::game_logic::main_state::{draw_with_center, draw_translate, draw_atlas_with_center};
 
 //Resource
@@ -31,7 +32,7 @@ impl ElderOutro {
         let atlas_index = "Atlas_Outro_Index";
 
         //Font Load
-        let text_info = Asset::new(Font::load(font_mononoki).and_then( |font| {
+        let text_info = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render(
                 "You are in the outro.",
                 &FontStyle::new(20.0, Color::BLACK),
@@ -61,8 +62,10 @@ impl ElderOutro {
         if window.keyboard()[Key::Return] == Pressed {
             // Matches the winner and increments their scene counters.
             // Resetting and finishing when done
-            if self.curr_scene_index < self.max_scenes - 1 {self.curr_scene_index += 1;}
-            else { self.curr_scene_index = 0; retval = SceneReturn::Finished;}
+            if self.curr_scene_index < self.max_scenes - 1 { self.curr_scene_index += 1; } else {
+                self.curr_scene_index = 0;
+                retval = SceneReturn::Finished;
+            }
         }
 
         Ok(retval)
@@ -78,16 +81,16 @@ impl ElderOutro {
 
         // Draw winner's scenes
         let atlas_key = *match self.winner {
-                PlayerType::Undetermined => ["P0_First", "P0_Second", "P0_Third", "P0_Fourth"]
-                    .get(self.curr_scene_index)
-                    .expect("Unhandled scene index in P0 outro::draw"),
-                PlayerType::Player1 => ["P1_First", "P1_Second", "P1_Third", "P1_Fourth"]
-                    .get(self.curr_scene_index)
-                    .expect("Unhandled scene index in P1 outro::draw"),
-                PlayerType::Player2 => ["P2_First", "P2_Second", "P2_Third", "P2_Fourth"]
-                    .get(self.curr_scene_index)
-                    .expect("Unhandled scene index in P2 outro::draw"),
-            };
+            PlayerType::Undetermined => ["P0_First", "P0_Second", "P0_Third", "P0_Fourth"]
+                .get(self.curr_scene_index)
+                .expect("Unhandled scene index in P0 outro::draw"),
+            PlayerType::Player1 => ["P1_First", "P1_Second", "P1_Third", "P1_Fourth"]
+                .get(self.curr_scene_index)
+                .expect("Unhandled scene index in P1 outro::draw"),
+            PlayerType::Player2 => ["P2_First", "P2_Second", "P2_Third", "P2_Fourth"]
+                .get(self.curr_scene_index)
+                .expect("Unhandled scene index in P2 outro::draw"),
+        };
         draw_atlas_with_center(window, &mut self.outro_scenes, window_center, atlas_key)?;
 
         // Draw enter button prompt.
@@ -108,7 +111,7 @@ impl ElderOutro {
 
     /// Sets the winner of the game
     /// This can be called during game execution so do not panic! if a 0 is passed
-    pub fn set_winner(&mut self, winner: PlayerType) -> Result<()>{
+    pub fn set_winner(&mut self, winner: PlayerType) -> Result<()> {
         self.winner = winner;
         Ok(())
     }

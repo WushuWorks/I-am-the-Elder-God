@@ -30,7 +30,7 @@ impl ElderIntro {
         let atlas_index = "Atlas_Intro_Index";
 
         //Font Load
-        let text_info = Asset::new(Font::load(font_mononoki).and_then( |font| {
+        let text_info = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render(
                 "You are in the intro.",
                 &FontStyle::new(20.0, Color::BLACK),
@@ -62,7 +62,6 @@ impl ElderIntro {
                 self.curr_scene_index = 0;
                 retval = SceneReturn::Finished;
             }
-
         }
 
         Ok(retval)
@@ -76,20 +75,19 @@ impl ElderIntro {
         draw_with_center(window, &mut self.intro_background, window_center)?;
 
         // Draws the selected scene with an atlas
-        let atlas_key =  ["First", "Second", "Third", "Fourth"]
+        let atlas_key = ["First", "Second", "Third", "Fourth"]
             .get(self.curr_scene_index)
             .expect("Unhandled scene index in intro::draw");
-        draw_atlas_with_center (window, &mut self.intro_scenes, window_center, atlas_key)?;
+        draw_atlas_with_center(window, &mut self.intro_scenes, window_center, atlas_key)?;
 
         // Draw enter button prompt.
-        draw_translate (window, &mut self.enter_button, Vector::new(60 + 112, window.screen_size().y as i32 - 180 - 84))?;
+        draw_translate(window, &mut self.enter_button, Vector::new(60 + 112, window.screen_size().y as i32 - 180 - 84))?;
 
         // Draw label text and overlay, label text should always render on top to show the state the game is in
-        draw_with_center (window, &mut self.intro_overlay, window_center)?;
-        draw_with_center (window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0))?;
+        draw_with_center(window, &mut self.intro_overlay, window_center)?;
+        draw_with_center(window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0))?;
 
         Ok(())
-
     }
 
     /// Handle various sorts of events, https://docs.rs/quicksilver/0.3.16/quicksilver/lifecycle/enum.Event.html

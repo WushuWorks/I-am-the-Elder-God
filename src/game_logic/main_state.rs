@@ -1,4 +1,3 @@
-
 /*
 Here we define the overarching 'Game' which contains all of its sub-components and is the core loop.
 */
@@ -19,7 +18,7 @@ use std::iter::Cycle;
 
 pub struct Game {
     //For scene order control
-    curr_scene:  SceneType,
+    curr_scene: SceneType,
     scene_circle_iterator: Cycle<IntoIter<SceneType>>,
 
     //Scene Data
@@ -68,17 +67,16 @@ impl State for Game {
 
     /// Process keyboard and mouse, update the game state
     fn update(&mut self, window: &mut Window) -> Result<()> {
-
         let scene_flag = match self.curr_scene {
-            SceneType::Intro     => self.intro_scenes.update(window)?,
-            SceneType::Game      => {
+            SceneType::Intro => self.intro_scenes.update(window)?,
+            SceneType::Game => {
                 let scene_retval = self.game_scenes.update(window)?;
                 self.outro_scenes.set_winner(self.game_scenes.get_winner()?)?;
                 scene_retval
-            },
-            SceneType::Outro     => {
+            }
+            SceneType::Outro => {
                 self.outro_scenes.update(window)?
-            },
+            }
         };
 
         match scene_flag {
@@ -86,7 +84,7 @@ impl State for Game {
             SceneReturn::Finished => { //Do transition
                 self.curr_scene = self.scene_circle_iterator.next().unwrap();
                 Ok(())
-            },
+            }
         }
     }
 
@@ -114,15 +112,13 @@ impl State for Game {
 
         //Result is passed up
         let retval = match self.curr_scene {
-            SceneType::Intro     => self.intro_scenes.draw(window),
-            SceneType::Game      => self.game_scenes.draw(window),
-            SceneType::Outro     => self.outro_scenes.draw(window),
+            SceneType::Intro => self.intro_scenes.draw(window),
+            SceneType::Game => self.game_scenes.draw(window),
+            SceneType::Outro => self.outro_scenes.draw(window),
         };
 
         retval
     }
-
-
 }
 
 /// Draws a standard image from the center to the passed vector
@@ -153,7 +149,7 @@ pub fn draw_translate(window: &mut Window, image: &mut Asset<Image>, coordinate:
 }
 
 ///Draws something from an Atlas at the given coordinates
-pub fn draw_atlas_with_center (window: &mut Window, atlas: &mut Asset<Atlas>, coordinate: Vector, key: &str) -> Result<()> {
+pub fn draw_atlas_with_center(window: &mut Window, atlas: &mut Asset<Atlas>, coordinate: Vector, key: &str) -> Result<()> {
     atlas.execute(|image| {
         window.draw(
             &image.get(key).expect("Failed to find key in draw").unwrap_image().area()

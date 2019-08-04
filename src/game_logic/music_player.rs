@@ -1,4 +1,3 @@
-
 use quicksilver::sound::*;
 use quicksilver::prelude::*;
 
@@ -10,19 +9,17 @@ pub struct MusicPlayer {
 }
 
 impl MusicPlayer {
-
     /// Set up a rudimentary sound loop by passing a file name, the length in seconds, and a volume.
     /// Volume is set here and is multiplicative, I.E. 0 is silent
     /// 1 is identity, and 2 is double volume
     pub fn new(path: &'static str, length_sec: f64, volume: f32) -> Result<Self> {
-
         let mut music_loop = Asset::new(Sound::load(path));
         music_loop.execute(|sound| {
             sound.set_volume(volume);
             Ok(())
         })?;
 
-        Ok(Self{
+        Ok(Self {
             music: music_loop,
             music_length: length_sec,
             frame_counter: 0.0,
@@ -37,8 +34,7 @@ impl MusicPlayer {
         let frame_inc;
 
         //Prune edge case where fps is 0
-        if curr_fps == 0.0 {frame_inc = 1.0/60.0;}
-        else {frame_inc = 1.0/curr_fps;}
+        if curr_fps == 0.0 { frame_inc = 1.0 / 60.0; } else { frame_inc = 1.0 / curr_fps; }
 
         //increment counters
         if self.frame_counter >= self.music_length {
@@ -51,7 +47,7 @@ impl MusicPlayer {
         //Play music if needed
         if self.started == false {
             self.started = true;
-            self.music.execute(|music| {music.play()})?;
+            self.music.execute(|music| { music.play() })?;
         }
 
         Ok(())

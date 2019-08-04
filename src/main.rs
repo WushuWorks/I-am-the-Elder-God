@@ -1,4 +1,3 @@
-
 //Declare as 'use'able modules
 mod game_logic;
 mod gameplay_logic;
@@ -25,5 +24,4 @@ fn main() {
         ..Default::default()
     };
     run::<Game>("I am the Elder God", Vector::new(1024, 768), settings);
-
 }
