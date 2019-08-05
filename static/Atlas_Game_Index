@@ -1,12 +1,12 @@
 HunterTokens.png
-size: 175, 130
+size: 165, 120
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
-Support_1
+Support
  rotate: false
  xy: 0, 0
- size: 40, 40
+ size: 30, 30
  orig: 40, 40
  offset: 0, 0
  index: -1
@@ -31,10 +31,10 @@ Support_4
  orig: 40, 40
  offset: 0, 0
  index: -1
-Assault_1
+Assault
  rotate: false
  xy: 0, 45
- size: 40, 40
+ size: 30, 30
  orig: 40, 40
  offset: 0, 0
  index: -1
@@ -59,10 +59,10 @@ Assault_4
  orig: 40, 40
  offset: 0, 0
  index: -1
-Trapper_1
+Trapper
  rotate: false
  xy: 0, 90
- size: 40, 40
+ size: 30, 30
  orig: 40, 40
  offset: 0, 0
  index: -1
@@ -89,36 +89,36 @@ Trapper_4
  index: -1
 
 MonsterTokens.png
-size: 120, 260
+size: 110, 250
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
 Wraith
  rotate: false
  xy: 0, 0
- size: 40, 40
- orig: 40, 40
+ size: 30, 30
+ orig: 30, 30
  offset: 0, 0
  index: -1
 Kraken
  rotate: false
  xy: 0, 50
- size: 80, 80
- orig: 80, 80
+ size: 70, 70
+ orig: 70, 70
  offset: 0, 0
  index: -1
 Elder
  rotate: false
  xy: 0, 140
- size: 120, 120
- orig: 120, 120
+ size: 110, 110
+ orig: 110, 110
  offset: 0, 0
  index: -1
 DeadGod
  rotate: false
  xy: 50, 0
- size: 40, 40
- orig: 40, 40
+ size: 30, 30
+ orig: 30, 30
  offset: 0, 0
  index: -1
 
@@ -158,7 +158,7 @@ S
 -
  rotate: false
  xy: 45, 0
- size: 40, 40
+ size: 30, 30
  orig: 40, 40
  offset: 0, 0
  index: -1

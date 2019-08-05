@@ -4,13 +4,13 @@ Here we define the overarching 'Game' which contains all of its sub-components a
 
 use crate::game_logic::scene_type::{SceneType, SceneReturn};
 use crate::game_logic::music_player::MusicPlayer;
+use crate::game_logic::draw_helper::*;
 use crate::scenes::game::ElderGame;
 use crate::scenes::intro::ElderIntro;
 use crate::scenes::outro::ElderOutro;
 
 //Resources
 use quicksilver::prelude::*;
-use quicksilver::graphics::Atlas;
 //Std imports
 use std::vec::IntoIter;
 use std::iter::Cycle;
@@ -120,44 +120,3 @@ impl State for Game {
         retval
     }
 }
-
-/// Draws a standard image from the center to the passed vector
-pub fn draw_with_center(window: &mut Window, image: &mut Asset<Image>, coordinate: Vector) -> Result<()> {
-    image.execute(|image| {
-        window.draw(
-            &image
-                .area()
-                .with_center((coordinate.x, coordinate.y)),
-            Img(&image),
-        );
-        Ok(())
-    })?;
-    Ok(())
-}
-
-///Draws an image by translate
-pub fn draw_translate(window: &mut Window, image: &mut Asset<Image>, coordinate: Vector) -> Result<()> {
-    image.execute(|image| {
-        window.draw(
-            &image.area()
-                .translate((coordinate.x, coordinate.y)),
-            Img(&image),
-        );
-        Ok(())
-    })?;
-    Ok(())
-}
-
-///Draws something from an Atlas at the given coordinates
-pub fn draw_atlas_with_center(window: &mut Window, atlas: &mut Asset<Atlas>, coordinate: Vector, key: &str) -> Result<()> {
-    atlas.execute(|image| {
-        window.draw(
-            &image.get(key).expect("Failed to find key in draw").unwrap_image().area()
-                .with_center((coordinate.x, coordinate.y)),
-            Img(&image.get(key).expect("Failed to find key in draw").unwrap_image()),
-        );
-        Ok(())
-    })?;
-    Ok(())
-}
-

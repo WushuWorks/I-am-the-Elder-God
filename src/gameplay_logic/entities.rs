@@ -10,6 +10,18 @@ pub enum PlayerType {
     Undetermined,
 }
 
+impl PlayerType {
+    /// Map enum to an index number if possible
+    /// PLayer1 -> 1, Player2 -> 2, Undetermined -> 0
+    pub fn key(&self) -> usize {
+        match self {
+            PlayerType::Player1 => {1},
+            PlayerType::Player2 => {2},
+            PlayerType::Undetermined => {0},
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone, Copy)]
 #[allow(unused)]
 pub enum ClassType {
@@ -20,6 +32,21 @@ pub enum ClassType {
     Kraken,
     Elder,
     NPC,
+}
+
+impl ClassType {
+    ///Map enum to an index string if possible
+    pub fn key(&self) -> &str {
+         match self {
+            ClassType::Support => {"Support"},
+            ClassType::Assault => {"Assault"},
+            ClassType::Trapper => {"Trapper"},
+            ClassType::Wraith => {"Wraith"},
+            ClassType::Kraken => {"Kraken"},
+            ClassType::Elder => {"Elder"},
+            ClassType::NPC => {"-"} //This maps to a blank TerrainStatus
+        }
+    }
 }
 
 /// Describes the attributes of a particular class
@@ -136,6 +163,8 @@ impl Entity{
     }
     /// Gets player info
     pub fn get_player(&self) -> Result<(&PlayerType)> { Ok((&self.player)) }
+    pub fn get_class(&self) -> Result<(&ClassType)> { Ok((&self.class)) }
+    pub fn get_pos(&self) -> Result<(&Vector)> { Ok((&self.pos)) }
 
 }
 

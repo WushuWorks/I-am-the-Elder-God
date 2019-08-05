@@ -12,3 +12,5 @@ pub mod main_state;
 pub mod scene_type;
 /// Plays music with a system dependant on the fps in draw calls
 pub mod music_player;
+/// Holds functions to execute draw calls
+pub mod draw_helper;
