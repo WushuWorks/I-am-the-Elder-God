@@ -21,6 +21,7 @@ fn main() {
         // `with_center`), blur them. This looks better with fonts.
 
         scale: quicksilver::graphics::ImageScaleStrategy::Blur,
+        resize: quicksilver::graphics::ResizeStrategy::Maintain,
         ..Default::default()
     };
     run::<Game>("I am the Elder God", Vector::new(1024, 768), settings);

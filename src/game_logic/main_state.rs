@@ -15,7 +15,6 @@ use quicksilver::prelude::*;
 use std::vec::IntoIter;
 use std::iter::Cycle;
 
-
 pub struct Game {
     //For scene order control
     curr_scene: SceneType,
@@ -89,9 +88,15 @@ impl State for Game {
     }
 
     /// Handle various sorts of events, https://docs.rs/quicksilver/0.3.16/quicksilver/lifecycle/enum.Event.html
-    fn event(&mut self, _event: &Event, _window: &mut Window) -> Result<()> {
-        //Do nothing for now
-        Ok(())
+    fn event(&mut self, event: &Event, window: &mut Window) -> Result<()> {
+        //Result is passed up
+        let retval = match self.curr_scene {
+            SceneType::Intro => self.intro_scenes.event(event, window),
+            SceneType::Game => self.game_scenes.event(event, window),
+            SceneType::Outro => self.outro_scenes.event(event, window),
+        };
+
+        retval
     }
 
     /// Draw stuff on the screen

@@ -15,7 +15,6 @@ pub struct ElderOutro {
     curr_scene_index: usize,
     max_scenes: usize,
 
-    enter_button: Asset<Image>,
     text: Asset<Image>,
 
     winner: PlayerType,
@@ -27,14 +26,13 @@ impl ElderOutro {
         let font_mononoki = "square.ttf";
         let background = "PHGameBackground.png";
         let overlay = "PHOverlayFade.png";
-        let enter = "Enter-120x90.png";
         //I declare like this because it is a sensible way to organize arbitrary ordered images
         let atlas_index = "Atlas_Outro_Index";
 
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render(
-                "You are in the outro.",
+                "Game set match. [Enter] to progress",
                 &FontStyle::new(20.0, Color::BLACK),
             )
         }));
@@ -47,7 +45,6 @@ impl ElderOutro {
             curr_scene_index: 0,
             max_scenes: 4,
 
-            enter_button: Asset::new(Image::load(enter)),
             text: text_info,
 
             winner: PlayerType::Undetermined,
@@ -92,9 +89,6 @@ impl ElderOutro {
                 .expect("Unhandled scene index in P2 outro::draw"),
         };
         draw_atlas_with_center(window, &mut self.outro_scenes, window_center, atlas_key)?;
-
-        // Draw enter button prompt.
-        draw_translate(window, &mut self.enter_button, Vector::new(50 + 112, window.screen_size().y as i32 - 150 - 84))?;
 
         // Draw label text, should always render on top to show the state the game is in
         draw_with_center(window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0))?;

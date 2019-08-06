@@ -32,6 +32,7 @@ pub fn draw_ex_with_center(window: &mut Window, image: &mut Asset<Image>, coordi
     Ok(())
 }
 
+/*
 ///Draws an image by translate
 pub fn draw_translate(window: &mut Window, image: &mut Asset<Image>, coordinate: Vector) -> Result<()> {
     image.execute(|image| {
@@ -44,6 +45,7 @@ pub fn draw_translate(window: &mut Window, image: &mut Asset<Image>, coordinate:
     })?;
     Ok(())
 }
+*/
 
 ///Draws something from an Atlas at the given coordinates
 pub fn draw_atlas_with_center(window: &mut Window, atlas: &mut Asset<Atlas>, coordinate: Vector, key: &str) -> Result<()> {

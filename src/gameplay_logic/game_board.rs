@@ -24,7 +24,7 @@ fn generate_map(size: Vector, level: Vec<String>, level_condition: Vec<String>) 
             let tile_cond_key = loaded_level_conditions.next().expect("Tried to allocate wrong sized level");
 
             let placeholder = Entity::new_npc(PlayerType::Undetermined, 0,0,0,0,
-                                              Vector::new(0.0,0.0), true, false)
+                                              Vector::new(x as f32,y as f32), true, false)
                                                    .expect("Cannot allocate placeholder NPC in Cell::new.");
 
             let cell = Cell {
@@ -43,7 +43,7 @@ fn generate_map(size: Vector, level: Vec<String>, level_condition: Vec<String>) 
 
 /// Cells are the atomic elements that describe what a unit consists of.
 /// It holds a position Vector to model
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Cell {
     pos: Vector,
     land: Terrain,
@@ -51,6 +51,7 @@ pub struct Cell {
     occupant: Entity,
 }
 
+#[allow(unused)]
 impl Cell {
     pub fn new() -> Self {
         let placeholder = Entity::new_npc(PlayerType::Undetermined, 0,0,0,0,
@@ -65,13 +66,12 @@ impl Cell {
     }
     pub fn get_land(&self) -> Result<&Terrain>       { Ok(&self.land) }
     pub fn get_cond(&self) -> Result<&TerrainStatus> { Ok(&self.condition) }
-    pub fn get_pos(&self) -> Result<&Vector>         { Ok(&self.pos) }
+    pub fn get_pos(&self) -> Result<Vector>         { Ok(self.pos) }
     pub fn get_occupant(&self) -> Result<&Entity>    { Ok(&self.occupant) }
     ///Swaps the passed current entity for the passed entity
-    pub fn swap_entity(&mut self, new_entity: Entity) -> Result<Entity>   {
-        let temp = self.occupant;
+    pub fn new_entity(&mut self, new_entity: Entity) -> Result<()>   {
         self.occupant = new_entity;
-        Ok(temp)
+        Ok(())
     }
 }
 

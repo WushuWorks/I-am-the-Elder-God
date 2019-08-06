@@ -1,6 +1,9 @@
 /*
 Here we write the character classes that inhabit the field
 */
+use crate::gameplay_logic::game_board::GameBoard;
+use crate::gameplay_logic::gameplay_type::*;
+
 use quicksilver::prelude::*;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -10,6 +13,7 @@ pub enum PlayerType {
     Undetermined,
 }
 
+/*
 impl PlayerType {
     /// Map enum to an index number if possible
     /// PLayer1 -> 1, Player2 -> 2, Undetermined -> 0
@@ -21,6 +25,7 @@ impl PlayerType {
         }
     }
 }
+*/
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 #[allow(unused)]
@@ -51,7 +56,7 @@ impl ClassType {
 
 /// Describes the attributes of a particular class
 #[allow(unused)]
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 struct Attributes {
     hp: i32,
     speed: u32,
@@ -127,7 +132,7 @@ impl Attributes {
 
 /// This models the most universal class
 #[allow(unused)]
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Entity {
     player: PlayerType,
     class: ClassType,
@@ -162,18 +167,55 @@ impl Entity{
         })
     }
     /// Gets player info
-    pub fn get_player(&self) -> Result<(&PlayerType)> { Ok((&self.player)) }
-    pub fn get_class(&self) -> Result<(&ClassType)> { Ok((&self.class)) }
-    pub fn get_pos(&self) -> Result<(&Vector)> { Ok((&self.pos)) }
+    pub fn get_player(&self) -> Result<&PlayerType> { Ok(&self.player) }
+    pub fn get_class(&self) -> Result<&ClassType> { Ok(&self.class) }
+    pub fn get_tangible(&self) -> Result<bool> { Ok(self.tangible) }
+    pub fn get_pos(&self) -> Result<Vector> { Ok(self.pos) }
+    /// Sets player info
+    pub fn set_pos(&mut self, new_loc: Vector) -> Result<()> {
+        self.pos = new_loc;
+        Ok(())
+    }
 
+    /// Check to see if this entity can move into a given location
+    pub fn can_move(&self, location: Vector, board: &GameBoard, players: &Vec<Entity>) -> Result<bool> {
+        let mut movable = true; //assume truth and attempt to disprove
+        let cell = board.get_board()?[location.y as usize][location.x as usize];
+        let land = *cell.get_land()?;
+        let cond = *cell.get_cond()?;
+        let occupant = cell.get_occupant()?;
+
+        //println!("Cell {:?}.", cell);
+
+        if self.tangible { //If we are tangible we need to check for tangible barriers
+            for player in players { //Check all players to see if there is a tangible player in location
+                if player.get_pos()? == location {
+                    movable = false;
+                }
+            }
+
+            if land == Terrain::Empty { //Check for impassable Terrain types
+                movable = false;
+            }
+
+            //Check for impassable TerrainStatus types
+            if cond == TerrainStatus::Frozen || cond == TerrainStatus::Shielded || cond == TerrainStatus::Impassable {
+                movable = false;
+            }
+            // Check for tangible occupant
+            if occupant.get_tangible()? {
+                movable = false;
+            }
+        }
+
+        // Offboard spaces should always be illegal moves
+        if land == Terrain::Empty {
+            movable = false;
+        }
+
+        Ok(movable)
+    }
 }
-
-
-
-
-
-
-
 
 
 
@@ -184,10 +226,3 @@ trait Elder {}
 trait Support {}
 trait Assault {}
 trait Trapper {}
-
-/*
-/// Try to move to any given location
-fn teleport(new_location: Vector) -> Result<()>;
-/// Move according to input
-fn walk(keyboard: &Keyboard, gamepad: &Gamepad) -> Result<()>;
-*/

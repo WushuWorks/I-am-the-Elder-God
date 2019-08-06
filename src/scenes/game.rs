@@ -16,8 +16,9 @@ pub struct ElderGame {
     game_board: GameBoard,
 
     //Player related data
-    player_ref: Vec<Entity>, //References to the players
+    player_ref: Vec<Entity>, // players
     curr_player: usize, //index of current player
+
 
     //Atlas supports keys A-Z, Blank (# is the same tile), and Null (with the '-' key)
     game_tiles: Asset<Atlas>,
@@ -38,7 +39,7 @@ impl ElderGame {
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render(
-                "WASD - move, 1/2/0 - end",
+                "WASD-Move,[Z,X,C,V]-Swap, 0/1/2-end",
                 &FontStyle::new(20.0, Color::BLACK),
             )
         }));
@@ -76,24 +77,11 @@ impl ElderGame {
     }
 
     /// Process keyboard and mouse, update the game state
+    /// Handles end game checking
     pub fn update(&mut self, window: &mut Window) -> Result<SceneReturn> {
         use ButtonState::*;
         let mut retval = SceneReturn::Good;
-        let player_type = self.player_ref[self.curr_player].get_player()?;
-        let gamepads = window.gamepads();
         let kb = window.keyboard();
-
-
-        //To make sure only the correct player can issue commands
-        match player_type {
-            PlayerType::Player1 => {
-
-            },
-            PlayerType::Player2 => {
-
-            },
-            PlayerType::Undetermined => {/*no controller, no turn*/}
-        }
 
         if kb[Key::Key0] == Pressed {
             self.winner = PlayerType::Undetermined;
@@ -107,6 +95,10 @@ impl ElderGame {
             self.winner = PlayerType::Player2;
             retval = SceneReturn::Finished;
         }
+        if kb[Key::Z] == Pressed {self.set_turn(0)?;}
+        if kb[Key::X] == Pressed {self.set_turn(1)?;}
+        if kb[Key::C] == Pressed {self.set_turn(2)?;}
+        if kb[Key::V] == Pressed {self.set_turn(3)?;}
 
         Ok(retval)
     }
@@ -122,7 +114,7 @@ impl ElderGame {
         // Draw GameBoard, calculates coordinates from the center for a 19x15 board of 40x40 pixels
         for row in self.game_board.get_board()? {
             for cell in row {
-                let tile_key = cell.get_land()?.key().expect("No known key for tile.");
+                let tile_key = cell.get_land()?.key().expect("No known key for tile.");;
                 let cond_key = cell.get_cond()?.key().expect("No known key for tile.");
                 let occupant_key = cell.get_occupant()?.get_class()?.key();
                 let pos = cell.get_pos().expect("Failed to get cell position game::draw");
@@ -161,8 +153,34 @@ impl ElderGame {
 
     /// Handle various sorts of events, https://docs.rs/quicksilver/0.3.16/quicksilver/lifecycle/enum.Event.html
     #[allow(unreachable_patterns, dead_code)]
-    pub fn event(&mut self, _event: &Event, _window: &mut Window) -> Result<()> {
-        //Do nothing
+    pub fn event(&mut self, event: &Event, _window: &mut Window) -> Result<()> {
+        use ButtonState::*;
+
+        let player: Entity = self.player_ref[self.curr_player];
+        let curr_loc = player.get_pos()?;
+
+        match event {
+            Event::Key(k, bs) => {
+                if *bs == Pressed {
+                    let new_loc = match k {
+                            Key::W => { Vector::new(curr_loc.x, curr_loc.y - 1.0)},
+                            Key::S => { Vector::new(curr_loc.x, curr_loc.y + 1.0)},
+                            Key::A => { Vector::new(curr_loc.x - 1.0, curr_loc.y)},
+                            Key::D => { Vector::new(curr_loc.x + 1.0, curr_loc.y)},
+                            _       => { curr_loc },
+                    };
+
+                    if self.player_ref[self.curr_player].can_move(new_loc, &self.game_board, &self.player_ref)? {
+                        self.player_ref[self.curr_player].set_pos(new_loc)?;
+                        //self.next_turn()?;
+                    } else {
+                        //println!("Can't Move!");
+                    }
+                }
+            },
+            _ => {},
+        }
+
         Ok(())
     }
 
@@ -175,12 +193,25 @@ impl ElderGame {
 
     ///Shifts index to the next player's turn
     pub fn next_turn(&mut self) -> Result<()> {
-        if self.curr_player >= self.player_ref.len() { //Time to reset
+        if self.curr_player as usize >= self.player_ref.len() - 1 { //Time to reset
             self.curr_player = 0;
         } else {
             self.curr_player += 1;
         }
         Ok(())
+    }
+
+    ///Shifts index to the selected players turn
+    pub fn set_turn(&mut self, player_index: usize) -> Result<bool> {
+        let mut set_player = true; //Assume truth and disprove if needed
+
+        if player_index <= self.player_ref.len() - 1 {
+            self.curr_player = player_index;
+        } else {
+            set_player = false;
+        }
+
+        Ok(set_player)
     }
 
 }

@@ -15,7 +15,6 @@ pub struct ElderIntro {
     curr_scene_index: usize,
     max_scenes: usize,
 
-    enter_button: Asset<Image>,
     text: Asset<Image>,
 }
 
@@ -26,13 +25,12 @@ impl ElderIntro {
         let font_mononoki = "square.ttf";
         let intro_background = "PHGameBackground.png";
         let overlay = "PHOverlayFade.png";
-        let enter = "Enter-120x90.png";
         let atlas_index = "Atlas_Intro_Index";
 
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render(
-                "You are in the intro.",
+                "Welcome. [Enter] to progress",
                 &FontStyle::new(20.0, Color::BLACK),
             )
         }));
@@ -45,7 +43,6 @@ impl ElderIntro {
             curr_scene_index: 0,
             max_scenes: 4,
 
-            enter_button: Asset::new(Image::load(enter)),
             text: text_info,
         })
     }
@@ -79,9 +76,6 @@ impl ElderIntro {
             .get(self.curr_scene_index)
             .expect("Unhandled scene index in intro::draw");
         draw_atlas_with_center(window, &mut self.intro_scenes, window_center, atlas_key)?;
-
-        // Draw enter button prompt.
-        draw_translate(window, &mut self.enter_button, Vector::new(60 + 112, window.screen_size().y as i32 - 180 - 84))?;
 
         // Draw label text and overlay, label text should always render on top to show the state the game is in
         draw_with_center(window, &mut self.intro_overlay, window_center)?;
