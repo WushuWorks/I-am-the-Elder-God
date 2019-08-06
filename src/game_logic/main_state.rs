@@ -1,25 +1,10 @@
-// I am the Elder God. A 3 vs 1 board game made using Quicksilver
-//
-// Copyright (C) 2019  WushuWorks
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 /*
 Here we define the overarching 'Game' which contains all of its sub-components and is the core loop.
 */
 
 use crate::game_logic::scene_type::{SceneType, SceneReturn};
+use crate::game_logic::music_player::MusicPlayer;
+use crate::game_logic::draw_helper::*;
 use crate::scenes::game::ElderGame;
 use crate::scenes::intro::ElderIntro;
 use crate::scenes::outro::ElderOutro;
@@ -30,10 +15,9 @@ use quicksilver::prelude::*;
 use std::vec::IntoIter;
 use std::iter::Cycle;
 
-
 pub struct Game {
     //For scene order control
-    curr_scene:  SceneType,
+    curr_scene: SceneType,
     scene_circle_iterator: Cycle<IntoIter<SceneType>>,
 
     //Scene Data
@@ -43,7 +27,7 @@ pub struct Game {
 
     //Large Files
     overlay: Asset<Image>,
-    bg_music: Asset<Sound>,
+    bg_music: MusicPlayer,
 }
 
 impl State for Game {
@@ -56,8 +40,9 @@ impl State for Game {
         let outro = ElderOutro::new().expect("Cannot load Elder Outro");
 
         //Large/universal data allocations, waste not want not
-        let music = Asset::new( Sound::load("vgm21.wav"));
-        let game_overlay = Asset::new(Image::load("FrameBorder1024x768.png"));
+        let music = MusicPlayer::new("vgm21.wav", 19.0, 1.0)
+            .expect("Cannot initialize MusicPlayer in main_state::new");
+        let game_overlay = Asset::new(Image::load("PHOverlay.png"));
 
         //Scene order allocation, this defines the order of states
         let scenes: Vec<SceneType> = vec![SceneType::Intro, SceneType::Game, SceneType::Outro];
@@ -81,18 +66,16 @@ impl State for Game {
 
     /// Process keyboard and mouse, update the game state
     fn update(&mut self, window: &mut Window) -> Result<()> {
-
         let scene_flag = match self.curr_scene {
-            SceneType::Intro     => self.intro_scenes.update(window)?,
-            SceneType::Game      => {
+            SceneType::Intro => self.intro_scenes.update(window)?,
+            SceneType::Game => {
                 let scene_retval = self.game_scenes.update(window)?;
                 self.outro_scenes.set_winner(self.game_scenes.get_winner()?)?;
                 scene_retval
-            },
-            SceneType::Outro     => {
+            }
+            SceneType::Outro => {
                 self.outro_scenes.update(window)?
-            },
-            _                    => panic!("Unhandled scene type {:?} encountered in MainState update.", self.curr_scene),
+            }
         };
 
         match scene_flag {
@@ -100,14 +83,20 @@ impl State for Game {
             SceneReturn::Finished => { //Do transition
                 self.curr_scene = self.scene_circle_iterator.next().unwrap();
                 Ok(())
-            },
+            }
         }
     }
 
     /// Handle various sorts of events, https://docs.rs/quicksilver/0.3.16/quicksilver/lifecycle/enum.Event.html
-    fn event(&mut self, _event: &Event, _window: &mut Window) -> Result<()> {
-        //Do nothing for now
-        Ok(())
+    fn event(&mut self, event: &Event, window: &mut Window) -> Result<()> {
+        //Result is passed up
+        let retval = match self.curr_scene {
+            SceneType::Intro => self.intro_scenes.event(event, window),
+            SceneType::Game => self.game_scenes.event(event, window),
+            SceneType::Outro => self.outro_scenes.event(event, window),
+        };
+
+        retval
     }
 
     /// Draw stuff on the screen
@@ -119,27 +108,20 @@ impl State for Game {
     ///
     fn draw(&mut self, window: &mut Window) -> Result<()> {
         window.clear(Color::WHITE)?;
+        let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
+        //See music_player.rs for reasoning
+        self.bg_music.play_if_not(window.current_fps())?;
 
         //Draw overlay first to put it on the bottom.
-        self.overlay.execute(|image| {
-            window.draw(
-                &image
-                    .area()
-                    .with_center((window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2)),
-                Img(&image),
-            );
-            Ok(())
-        })?;
+        draw_with_center(window, &mut self.overlay, window_center)?;
 
         //Result is passed up
         let retval = match self.curr_scene {
-            SceneType::Intro     => self.intro_scenes.draw(window),
-            SceneType::Game      => self.game_scenes.draw(window),
-            SceneType::Outro     => self.outro_scenes.draw(window),
-            _                    => panic!("Unhandled scene type {:?} encountered in MainState draw.", self.curr_scene),
+            SceneType::Intro => self.intro_scenes.draw(window),
+            SceneType::Game => self.game_scenes.draw(window),
+            SceneType::Outro => self.outro_scenes.draw(window),
         };
 
         retval
     }
-
 }

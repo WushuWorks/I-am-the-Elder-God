@@ -1,0 +1,101 @@
+P0WinSheet.png
+size: 3215,600
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+P0_First
+ rotate: false
+ xy: 0, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+P0_Second
+ rotate: false
+ xy: 805, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+P0_Third
+ rotate: false
+ xy: 1610, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+P0_Fourth
+ rotate: false
+ xy: 2415, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+
+P1WinSheet.png
+size: 3215,600
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+P1_First
+ rotate: false
+ xy: 0, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+P1_Second
+ rotate: false
+ xy: 805, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+P1_Third
+ rotate: false
+ xy: 1610, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+P1_Fourth
+ rotate: false
+ xy: 2415, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+
+P2WinSheet.png
+size: 3215,600
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+P2_First
+ rotate: false
+ xy: 0, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+P2_Second
+ rotate: false
+ xy: 805, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+P2_Third
+ rotate: false
+ xy: 1610, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1
+P2_Fourth
+ rotate: false
+ xy: 2415, 0
+ size: 800, 600
+ orig: 800, 600
+ offset: 0, 0
+ index: -1

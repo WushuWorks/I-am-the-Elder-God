@@ -4,6 +4,10 @@ for example. Everything that you want to use must have the keyword 'pub', all th
 level.
 */
 
-pub mod game;
-pub mod intro;
-pub mod outro;
+//This package contains logic to implement gameplay
+
+///Logic that manages the games board
+pub mod game_board;
+pub mod gameplay_type;
+pub mod game_levels;
+pub mod entities;
