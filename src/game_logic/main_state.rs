@@ -107,7 +107,7 @@ impl State for Game {
     /// ```translate((2 + 112, window.screen_size().y as i32 - 30 - 84))```
     ///
     fn draw(&mut self, window: &mut Window) -> Result<()> {
-        window.clear(Color::WHITE)?;
+        //window.clear(Color::WHITE)?;
         let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
         //See music_player.rs for reasoning
         self.bg_music.play_if_not(window.current_fps())?;
