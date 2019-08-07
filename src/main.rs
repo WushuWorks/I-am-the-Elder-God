@@ -22,6 +22,8 @@ fn main() {
 
         scale: quicksilver::graphics::ImageScaleStrategy::Blur,
         resize: quicksilver::graphics::ResizeStrategy::Maintain,
+        draw_rate:  16.0,  // 16ms per draw = 60 draw per second
+        max_updates: 60, //Maximum updates per frame
         ..Default::default()
     };
     run::<Game>("I am the Elder God", Vector::new(900, 700), settings);
