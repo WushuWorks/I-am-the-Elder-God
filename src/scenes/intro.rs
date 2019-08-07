@@ -69,17 +69,17 @@ impl ElderIntro {
         let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
 
         // Draw the background
-        draw_with_center(window, &mut self.intro_background, window_center)?;
+        draw_ex_with_center(window, &mut self.intro_background, window_center, Transform::IDENTITY, 1.0)?;
 
         // Draws the selected scene with an atlas
         let atlas_key = ["First", "Second", "Third", "Fourth"]
             .get(self.curr_scene_index)
             .expect("Unhandled scene index in intro::draw");
-        draw_atlas_with_center(window, &mut self.intro_scenes, window_center, atlas_key)?;
+        draw_ex_atlas_with_center(window, &mut self.intro_scenes, window_center, Transform::IDENTITY, 2.0, atlas_key)?;
 
         // Draw label text and overlay, label text should always render on top to show the state the game is in
-        draw_with_center(window, &mut self.intro_overlay, window_center)?;
-        draw_with_center(window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0))?;
+        draw_ex_with_center(window, &mut self.intro_overlay, window_center, Transform::IDENTITY, 3.0)?;
+        draw_ex_with_center(window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0), Transform::IDENTITY, 4.0)?;
 
         Ok(())
     }

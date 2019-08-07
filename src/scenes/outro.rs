@@ -73,8 +73,8 @@ impl ElderOutro {
         let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
 
         // Draw the frame and overlay
-        draw_with_center(window, &mut self.outro_background, window_center)?;
-        draw_with_center(window, &mut self.outro_overlay, window_center)?;
+        draw_ex_with_center(window, &mut self.outro_background, window_center, Transform::IDENTITY, 1.0)?;
+        draw_ex_with_center(window, &mut self.outro_overlay, window_center, Transform::IDENTITY, 2.0)?;
 
         // Draw winner's scenes
         let atlas_key = *match self.winner {
@@ -88,10 +88,10 @@ impl ElderOutro {
                 .get(self.curr_scene_index)
                 .expect("Unhandled scene index in P2 outro::draw"),
         };
-        draw_atlas_with_center(window, &mut self.outro_scenes, window_center, atlas_key)?;
+        draw_ex_atlas_with_center(window, &mut self.outro_scenes, window_center, Transform::IDENTITY, 3.0, atlas_key)?;
 
         // Draw label text, should always render on top to show the state the game is in
-        draw_with_center(window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0))?;
+        draw_ex_with_center(window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0), Transform::IDENTITY, 4.0)?;
 
         Ok(())
     }
@@ -104,7 +104,7 @@ impl ElderOutro {
     }
 
     /// Sets the winner of the game
-    /// This can be called during game execution so do not panic! if a 0 is passed
+    /// This can be called during game execution
     pub fn set_winner(&mut self, winner: PlayerType) -> Result<()> {
         self.winner = winner;
         Ok(())
