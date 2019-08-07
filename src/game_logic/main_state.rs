@@ -42,7 +42,7 @@ impl State for Game {
         //Large/universal data allocations, waste not want not
         let music = MusicPlayer::new("vgm21.wav", 19.0, 1.0)
             .expect("Cannot initialize MusicPlayer in main_state::new");
-        let game_overlay = Asset::new(Image::load("PHOverlay.png"));
+        let game_overlay = Asset::new(Image::load("PHFrame.png"));
 
         //Scene order allocation, this defines the order of states
         let scenes: Vec<SceneType> = vec![SceneType::Intro, SceneType::Game, SceneType::Outro];
@@ -113,7 +113,7 @@ impl State for Game {
         self.bg_music.play_if_not(window.current_fps())?;
 
         //Draw overlay first to put it on the bottom.
-        draw_with_center(window, &mut self.overlay, window_center)?;
+        draw_ex_with_center(window, &mut self.overlay, window_center, Transform::IDENTITY, 0.0)?;
 
         //Result is passed up
         let retval = match self.curr_scene {

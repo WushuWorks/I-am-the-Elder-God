@@ -24,5 +24,5 @@ fn main() {
         resize: quicksilver::graphics::ResizeStrategy::Maintain,
         ..Default::default()
     };
-    run::<Game>("I am the Elder God", Vector::new(1024, 768), settings);
+    run::<Game>("I am the Elder God", Vector::new(900, 700), settings);
 }

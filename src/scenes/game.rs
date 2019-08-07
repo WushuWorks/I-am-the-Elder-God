@@ -50,13 +50,13 @@ impl ElderGame {
                                         .expect("Cannot create Wraith game::new.");
         let support = Entity::new_char(ClassType::Support, PlayerType::Player2,
                                        Vector::new(6,4), false)
-            .expect("Cannot create Wraith game::new.");
+            .expect("Cannot create Support game::new.");
         let assault = Entity::new_char(ClassType::Assault, PlayerType::Player2,
                                        Vector::new(9,3), false)
-            .expect("Cannot create Wraith game::new.");
+            .expect("Cannot create Assault game::new.");
         let trapper = Entity::new_char(ClassType::Trapper, PlayerType::Player2,
                                        Vector::new(12,4), false)
-            .expect("Cannot create Wraith game::new.");
+            .expect("Cannot create Trapper game::new.");
         let player_ref = vec![wraith, support, assault, trapper];
 
 
@@ -108,8 +108,8 @@ impl ElderGame {
         let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
 
         // Draw the frame and overlay
-        draw_with_center(window, &mut self.game_background, window_center)?;
-        draw_with_center(window, &mut self.game_overlay, window_center)?;
+        draw_ex_with_center(window, &mut self.game_background, window_center, Transform::IDENTITY, 1.0)?;
+        draw_ex_with_center(window, &mut self.game_overlay, window_center, Transform::IDENTITY, 2.0)?;
 
         // Draw GameBoard, calculates coordinates from the center for a 19x15 board of 40x40 pixels
         for row in self.game_board.get_board()? {
@@ -120,18 +120,20 @@ impl ElderGame {
                 let pos = cell.get_pos().expect("Failed to get cell position game::draw");
 
                 //Draw land
-                draw_atlas_with_center(window, &mut self.game_tiles,
+                draw_ex_atlas_with_center(window, &mut self.game_tiles,
                                        Vector::new(window_center.x - 380.0 + (40.0 * pos.x) + 20.0,
-                                                   window_center.y - 300.0 + (40.0 * pos.y) + 20.0), tile_key)?;
+                                                   window_center.y - 300.0 + (40.0 * pos.y) + 20.0),
+                                          Transform::IDENTITY, 3.0, tile_key)?;
                 //Draw occupying objects
-                draw_atlas_with_center(window, &mut self.token_tiles,
+                draw_ex_atlas_with_center(window, &mut self.token_tiles,
                                        Vector::new(window_center.x - 380.0 + (40.0 * pos.x) + 23.0,
-                                                   window_center.y - 300.0 + (40.0 * pos.y) + 18.0), occupant_key)?;
+                                                   window_center.y - 300.0 + (40.0 * pos.y) + 18.0),
+                                       Transform::IDENTITY, 4.0, occupant_key)?;
                 //Draw conditions at layer 2
                 draw_ex_atlas_with_center(window, &mut self.token_tiles,
                                        Vector::new(window_center.x - 380.0 + (40.0 * pos.x) + 23.0,
                                                    window_center.y - 300.0 + (40.0 * pos.y) + 18.0),
-                                            Transform::IDENTITY, 2.0,cond_key)?;
+                                            Transform::IDENTITY, 6.0,cond_key)?;
             }
         }
 
@@ -139,14 +141,14 @@ impl ElderGame {
         for player in self.player_ref.iter() {
             let player_pos = player.get_pos()?;
             let player_key = player.get_class()?.key();
-            draw_atlas_with_center(window, &mut self.token_tiles,
+            draw_ex_atlas_with_center(window, &mut self.token_tiles,
                                    Vector::new(window_center.x - 380.0 + (40.0 * player_pos.x) + 23.0,
-                                               window_center.y - 300.0 + (40.0 * player_pos.y) + 18.0), player_key)?;
+                                               window_center.y - 300.0 + (40.0 * player_pos.y) + 18.0), Transform::IDENTITY, 5.0, player_key)?;
         }
 
         // Draw label text, should always render on top to show the state the game is in
         draw_ex_with_center(window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0),
-        Transform::IDENTITY, 3.0)?;
+        Transform::IDENTITY, 7.0)?;
 
         Ok(())
     }
