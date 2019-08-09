@@ -135,8 +135,8 @@ impl ElderGame {
         let mut turn_order = vec![1,0,2,0,3].into_iter().cycle();
         let curr_player = turn_order.next().expect("Cannot find first player");
         //Find first player's stats
-        let moves = *player_ref[curr_player].get_stats()?.get_speed();
-        let actions = *player_ref[curr_player].get_stats()?.get_actions();
+        let moves = *player_ref[curr_player].get_stats()?.get_speed() as u32;
+        let actions = *player_ref[curr_player].get_stats()?.get_actions() as u32;
 
         Ok(Self {
             game_background: Asset::new(Image::load(background)),
@@ -239,7 +239,6 @@ impl ElderGame {
             for cell in row {
                 let tile_key = cell.get_land()?.key().expect("No known key for tile.");;
                 let cond_key = cell.get_cond()?.key().expect("No known key for tile.");
-                let occupant_key = cell.get_occupant()?.get_class()?.key();
                 let pos = cell.get_pos().expect("Failed to get cell position game::draw");
 
                 //Draw land
@@ -247,11 +246,7 @@ impl ElderGame {
                                        Vector::new(window_center.x - 380.0 + (40.0 * pos.x) + 20.0,
                                                    window_center.y - 300.0 + (40.0 * pos.y) + 20.0),
                                           Transform::IDENTITY, 3.0, tile_key)?;
-                //Draw occupying objects
-                draw_ex_atlas_with_center(window, &mut self.token_tiles,
-                                       Vector::new(window_center.x - 380.0 + (40.0 * pos.x) + 23.0,
-                                                   window_center.y - 300.0 + (40.0 * pos.y) + 18.0),
-                                       Transform::IDENTITY, 4.0, occupant_key)?;
+
                 //Draw conditions at layer 2
                 draw_ex_atlas_with_center(window, &mut self.token_tiles,
                                        Vector::new(window_center.x - 380.0 + (40.0 * pos.x) + 23.0,
@@ -386,10 +381,11 @@ impl ElderGame {
     ///Shifts index to the next player's turn, and sets variables
     pub fn next_turn(&mut self) -> Result<()> {
         self.curr_player = self.turn_order.next().expect("Cannot find next player index game::next_turn");
-        self.moves = *self.player_ref[self.curr_player].get_stats()?.get_speed();
-        self.actions = *self.player_ref[self.curr_player].get_stats()?.get_actions();
+        self.moves = *self.player_ref[self.curr_player].get_stats()?.get_speed() as u32;
+        self.actions = *self.player_ref[self.curr_player].get_stats()?.get_actions() as u32;
         self.action_state = ActionType::Move;
         self.end_flag = false;
+        self.game_board.decrement_temp_cond_counters()?;
 
         Ok(())
     }

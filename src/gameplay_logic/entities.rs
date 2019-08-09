@@ -44,91 +44,101 @@ impl ClassType {
 #[allow(unused)]
 #[derive(Debug, Clone, Copy)]
 pub struct Attributes {
-    hp: i32,
-    curr_hp: i32,
-    speed: u32,
-    armor: i32,
-    power: i32,
-    actions: u32,
+    hp: f32,
+    curr_hp: f32,
+    speed: f32,
+    armor: f32,
+    power: f32,
+    actions: f32,
+    exp: f32,
 }
 
 #[allow(unused)]
 impl Attributes {
     /// Initialize universal stats
-    pub fn new() -> Self { Self{hp: 1, curr_hp: 1, speed: 0, armor: 1, power: 1, actions: 0} }
+    pub fn new() -> Self { Self{hp: 1.0, curr_hp: 1.0, speed: 0.0, armor: 1.0, power: 1.0, actions: 0.0, exp: 0.0} }
     /// Sets stats for a class
     pub fn set_class(&mut self, class: &ClassType) -> Result<Self> {
-        let hp: i32;
-        let curr_hp: i32;
-        let speed: u32;
-        let armor: i32;
-        let power: i32;
-        let actions: u32;
+        let hp: f32;
+        let curr_hp: f32;
+        let speed: f32;
+        let armor: f32;
+        let power: f32;
+        let actions: f32;
         //Attribute allocation
         match class {
                     ClassType::Support => {
-                        hp = 100;
-                        speed = 3;
-                        armor = 2;
-                        power = 2;
-                        actions = 1;
+                        hp = 100.0;
+                        speed = 3.0;
+                        armor = 2.0;
+                        power = 2.0;
+                        actions = 1.0;
                     },
                     ClassType::Assault => {
-                        hp = 90;
-                        speed = 4;
-                        armor = 1;
-                        power = 4;
-                        actions = 1;
+                        hp = 90.0;
+                        speed = 4.0;
+                        armor = 1.0;
+                        power = 4.0;
+                        actions = 1.0;
                     },
                     ClassType::Trapper => {
-                        hp = 100;
-                        speed = 3;
-                        armor = 2;
-                        power = 2;
-                        actions = 1;
+                        hp = 100.0;
+                        speed = 3.0;
+                        armor = 2.0;
+                        power = 2.0;
+                        actions = 1.0;
                     }
                     ClassType::Wraith => {
-                        hp = 100;
-                        speed = 4;
-                        armor = 2;
-                        power = 2;
-                        actions = 1;
+                        hp = 100.0;
+                        speed = 4.0;
+                        armor = 2.0;
+                        power = 2.0;
+                        actions = 1.0;
                     },
                     ClassType::Kraken => {
-                        hp = 250;
-                        speed = 3;
-                        armor = 4;
-                        power = 4;
-                        actions = 1;
+                        hp = 250.0;
+                        speed = 3.0;
+                        armor = 4.0;
+                        power = 4.0;
+                        actions = 1.0;
                     },
                     ClassType::Elder => {
-                        hp = 500;
-                        speed = 3;
-                        armor = 2;
-                        power = 2;
-                        actions = 2;
+                        hp = 500.0;
+                        speed = 3.0;
+                        armor = 2.0;
+                        power = 2.0;
+                        actions = 2.0;
                     }
                     ClassType::NPC => {
-                        hp = 1;
-                        speed = 1;
-                        armor = 1;
-                        power = 1;
-                        actions = 1;
+                        hp = 1.0;
+                        speed = 1.0;
+                        armor = 1.0;
+                        power = 1.0;
+                        actions = 1.0;
                     }
         }
         curr_hp = hp;
 
-        Ok(Self{hp, curr_hp, speed, armor, power, actions})
+        Ok(Self{hp, curr_hp, speed, armor, power, actions, exp: 0.0})
     }
-    pub fn set_custom_stats(&mut self, hp: i32, curr_hp: i32, speed: u32, armor: i32, power: i32, actions: u32) -> Result<Self> {
-        Ok(Self{hp, curr_hp, speed, armor, power, actions})
+    pub fn set_custom_stats(&mut self, hp: f32, curr_hp: f32, speed: f32, armor: f32, power: f32, actions: f32, exp: f32) -> Result<Self> {
+        Ok(Self{hp, curr_hp, speed, armor, power, actions, exp})
     }
-    pub fn get_hp(&self) -> &i32 { &self.hp }
-    pub fn get_curr_hp(&self) -> &i32 { &self.curr_hp }
-    pub fn get_speed(&self) -> &u32{ &self.speed }
-    pub fn get_armor(&self) -> &i32{ &self.armor }
-    pub fn get_power(&self) -> &i32{ &self.power }
-    pub fn get_actions(&self) -> &u32{ &self.actions }
+    pub fn get_hp(&self)      -> &f32 { &self.hp }
+    pub fn get_curr_hp(&self) -> &f32 { &self.curr_hp }
+    pub fn get_speed(&self)   -> &f32 { &self.speed }
+    pub fn get_armor(&self)   -> &f32 { &self.armor }
+    pub fn get_power(&self)   -> &f32 { &self.power }
+    pub fn get_actions(&self) -> &f32 { &self.actions }
+    pub fn get_exp(&self)     -> &f32 { &self.exp }
+    //Set
+    pub fn set_hp(&mut self, hp: f32)            { self.hp = hp }
+    pub fn set_curr_hp(&mut self, curr_hp: f32)  { self.curr_hp = curr_hp }
+    pub fn set_speed(&mut self, speed: f32)      { self.speed = speed }
+    pub fn set_armor(&mut self, armor: f32)      { self.armor = armor }
+    pub fn set_power(&mut self, power: f32)      { self.power = power }
+    pub fn set_actions(&mut self, actions: f32)  { self.actions = actions }
+    pub fn set_exp(&mut self, exp: f32)          { self.exp = exp }
 }
 
 /// This models the most universal class
@@ -146,11 +156,11 @@ pub struct Entity {
 #[allow(unused)]
 impl Entity{
     /// Makes class-less character
-    pub fn new_npc(player: PlayerType, hp: i32, curr_hp: i32, speed: u32, armor: i32, power: i32, actions: u32, pos: Vector, invincible: bool, tangible: bool) -> Result<Self> {
+    pub fn new_npc(player: PlayerType, hp: f32, curr_hp: f32, speed: f32, armor: f32, power: f32, actions: f32, exp: f32, pos: Vector, invincible: bool, tangible: bool) -> Result<Self> {
         Ok(Self{
             player,
             class: ClassType::NPC,
-            stats: Attributes::new().set_custom_stats(hp, curr_hp, speed, armor, power, actions).expect("Cannot create npc with given stats"),
+            stats: Attributes::new().set_custom_stats(hp, curr_hp, speed, armor, power, actions, exp).expect("Cannot create npc with given stats"),
             pos,
             invincible,
             tangible,
@@ -185,7 +195,6 @@ impl Entity{
         let cell = board.get_board()?[location.y as usize][location.x as usize];
         let land = *cell.get_land()?;
         let cond = *cell.get_cond()?;
-        let occupant = cell.get_occupant()?;
 
         if self.tangible { //If we are tangible we need to check for tangible barriers
             for player in players { //Check all players to see if there is a tangible player in location
@@ -199,12 +208,11 @@ impl Entity{
             }
 
             //Check for impassable TerrainStatus types
-            if cond == TerrainStatus::Frozen || cond == TerrainStatus::Shielded || cond == TerrainStatus::Impassable {
-                movable = false;
-            }
-            // Check for tangible occupant
-            if occupant.get_tangible()? {
-                movable = false;
+            match cond {
+                TerrainStatus::Frozen     => movable = false,
+                TerrainStatus::Shielded   => movable = false,
+                TerrainStatus::Impassable => movable = false,
+                _                         => {}
             }
         }
 
