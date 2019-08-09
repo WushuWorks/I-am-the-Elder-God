@@ -6,19 +6,57 @@ use crate::game_logic::draw_helper::*;
 //Resources
 use quicksilver::prelude::*;
 use quicksilver::graphics::Atlas;
+//Std
+use std::iter::Cycle;
+use std::vec::IntoIter;
+
+#[derive(PartialEq)]
+enum ActionType {
+    Move,
+    Action,
+    End,
+}
 
 pub struct ElderGame {
     game_background: Asset<Image>,
     game_overlay: Asset<Image>,
+
+    //Label Text
     text: Asset<Image>,
+    controls_text: Asset<Image>,
+    class_text: Asset<Image>,
+    info_text: Asset<Image>,
+    abilities_text: Asset<Image>,
+    underline: Asset<Image>,
+    //White
+    move_text: Asset<Image>,
+    action_text: Asset<Image>,
+    end_text: Asset<Image>,
+    //Grey
+    move_grey: Asset<Image>,
+    action_grey: Asset<Image>,
+    end_grey: Asset<Image>,
+
+    //Stat Labels
+    hp_label: Asset<Image>,
+    move_label: Asset<Image>,
+    team_label: Asset<Image>,
+    sat_label: Asset<Image>,
+    elder_label: Asset<Image>,
 
     //game_board layer
     game_board: GameBoard,
 
     //Player related data
     player_ref: Vec<Entity>, // players
+    turn_order: Cycle<IntoIter<usize>>, // turn index iterator
     curr_player: usize, //index of current player
 
+    //Turn control data - [Move, Action, End]
+    end_flag: bool,
+    action_state: ActionType,
+    moves: u32,
+    actions: u32,
 
     //Atlas supports keys A-Z, Blank (# is the same tile), and Null (with the '-' key)
     game_tiles: Asset<Atlas>,
@@ -27,6 +65,7 @@ pub struct ElderGame {
     winner: PlayerType,
 }
 
+#[allow(unused_assignments)]
 impl ElderGame {
     /// Load the assets and initialise the game
     pub fn new() -> Result<Self> {
@@ -35,14 +74,46 @@ impl ElderGame {
         let overlay = "PHOverlayFade.png";
         let atlas_index = "Atlas_Tile_Index";
         let game_atlas_index = "Atlas_Game_Index";
+        let underline = "line.png";
 
         //Font Load
         let text_info = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render(
-                "WASD-Move,[Z,X,C,V]-Swap, 0/1/2-end",
-                &FontStyle::new(20.0, Color::BLACK),
-            )
-        }));
+            font.render("Arrow Keys-Move, Q-Action, 0/1/2-end", &FontStyle::new(20.0, Color::BLACK), )}));
+        let controls_text = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("[Press]", &FontStyle::new(17.0, Color::WHITE), )}));
+        let class_text = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("[Class]", &FontStyle::new(17.0, Color::WHITE), )}));
+        let info_text = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("[Stats]", &FontStyle::new(17.0, Color::WHITE), )}));
+        let abilities_text = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("[Action]", &FontStyle::new(17.0, Color::WHITE), )}));
+
+        //Menu Words
+        let move_text = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("[M]ove", &FontStyle::new(16.0, Color::WHITE), )}));
+        let action_text = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("[A]ction", &FontStyle::new(16.0, Color::WHITE), )}));
+        let end_text = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("[E]nd", &FontStyle::new(16.0, Color::WHITE),)}));
+        //Grey Words
+        let move_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("[M]ove", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let action_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("[A]ction", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let end_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("[E]nd", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        //Stat Labels
+        let sat_label = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("SAT", &FontStyle::new(14.0, Color::WHITE), )}));
+        let elder_label = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("GOD", &FontStyle::new(14.0, Color::WHITE),)}));
+        //Menu Words
+        let hp_label = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("HP:", &FontStyle::new(14.0, Color::WHITE), )}));
+        let move_label = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Move:", &FontStyle::new(14.0, Color::WHITE), )}));
+        let team_label = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Team:", &FontStyle::new(14.0, Color::WHITE),)}));
 
         //Create players
         let wraith = Entity::new_char(ClassType::Wraith, PlayerType::Player1,
@@ -57,17 +128,35 @@ impl ElderGame {
         let trapper = Entity::new_char(ClassType::Trapper, PlayerType::Player2,
                                        Vector::new(12,4), false)
             .expect("Cannot create Trapper game::new.");
-        let player_ref = vec![wraith, support, assault, trapper];
 
+        //Player Vector
+        let player_ref = vec![wraith, support, assault, trapper];
+        //Player Turn order, there must be no elements greater than `player_ref.len()-1`
+        let mut turn_order = vec![1,0,2,0,3].into_iter().cycle();
+        let curr_player = turn_order.next().expect("Cannot find first player");
+        //Find first player's stats
+        let moves = *player_ref[curr_player].get_stats()?.get_speed();
+        let actions = *player_ref[curr_player].get_stats()?.get_actions();
 
         Ok(Self {
             game_background: Asset::new(Image::load(background)),
             game_overlay: Asset::new(Image::load(overlay)),
             text: text_info,
+            controls_text, class_text, info_text, abilities_text,
+            underline: Asset::new(Image::load(underline)),
+            move_text, action_text, end_text,
+            move_grey, action_grey, end_grey,
+            hp_label, move_label, team_label, sat_label, elder_label,
 
             game_board: GameBoard::new().expect("Failed to load GameBoard in scenes::game::ElderGame::new"),
             player_ref,
-            curr_player: 0,
+            turn_order,
+            curr_player,
+
+            //Turn control data
+            end_flag: false,
+            action_state: ActionType::Move,
+            moves, actions,
 
             game_tiles: Asset::new(Atlas::load(atlas_index)),
             token_tiles: Asset::new(Atlas::load(game_atlas_index)),
@@ -77,11 +166,49 @@ impl ElderGame {
     }
 
     /// Process keyboard and mouse, update the game state
-    /// Handles end game checking
     pub fn update(&mut self, window: &mut Window) -> Result<SceneReturn> {
         use ButtonState::*;
         let mut retval = SceneReturn::Good;
         let kb = window.keyboard();
+
+        let curr_loc = self.player_ref[self.curr_player].get_pos()?;
+        let mut moved = false;
+        let mut acted = false;
+
+        //Change ActionState - disallow swap if nonsensical
+        if kb[Key::M] == Pressed && self.moves > 0   {self.action_state = ActionType::Move;}
+        if kb[Key::A] == Pressed && self.actions > 0 {self.action_state = ActionType::Action;}
+        if kb[Key::E] == Pressed                     {self.action_state = ActionType::End;}
+
+        //Only accept commands when the player can do something
+        match self.action_state {
+            ActionType::Move => {
+                if self.moves > 0 {
+                    if kb[Key::Up] == Pressed { moved = self.try_move(Vector::new(curr_loc.x, curr_loc.y - 1.0))?; }
+                    else if kb[Key::Left] == Pressed { moved = self.try_move(Vector::new(curr_loc.x - 1.0, curr_loc.y))?;}
+                    else if kb[Key::Down] == Pressed { moved = self.try_move(Vector::new(curr_loc.x, curr_loc.y + 1.0))?;}
+                    else if kb[Key::Right] == Pressed { moved = self.try_move(Vector::new(curr_loc.x + 1.0, curr_loc.y))?;}
+                }
+            },
+            ActionType::Action => {
+                if self.actions > 0 {
+                    if kb[Key::Q] == Pressed { acted = true; }
+                }
+            },
+            ActionType::End => {
+                self.end_flag = true;
+                self.next_turn()?;
+            }
+        }
+
+        if moved {
+            moved = false;
+            self.moves -= 1;
+        }
+        if acted {
+            acted = false;
+            self.actions -= 1;
+        }
 
         if kb[Key::Key0] == Pressed {
             self.winner = PlayerType::Undetermined;
@@ -95,10 +222,6 @@ impl ElderGame {
             self.winner = PlayerType::Player2;
             retval = SceneReturn::Finished;
         }
-        if kb[Key::Z] == Pressed {self.set_turn(0)?;}
-        if kb[Key::X] == Pressed {self.set_turn(1)?;}
-        if kb[Key::C] == Pressed {self.set_turn(2)?;}
-        if kb[Key::V] == Pressed {self.set_turn(3)?;}
 
         Ok(retval)
     }
@@ -137,6 +260,20 @@ impl ElderGame {
             }
         }
 
+        //Draw Menus with SmallSquare
+        let offsets = vec![Vector::new(1.0, 1.0), Vector::new(1.0, -1.0), Vector::new(-1.0, 1.0), Vector::new(-1.0, -1.0)];
+        for offset in offsets {
+            draw_ex_atlas_with_center(window, &mut self.token_tiles,
+                                      Vector::new(window_center.x - 303.0 * offset.x, window_center.y - 185.0 * offset.y),
+                                      Transform::IDENTITY, 6.0, "SmallSquare")?;
+        }
+        
+        //Draw Selected Player Class Label
+        let curr_class_key = self.player_ref[self.curr_player].get_class()?.key().to_owned() + "Class";
+        draw_ex_atlas_with_center(window, &mut self.token_tiles,
+                                  Vector::new(window_center.x - 303.0, window_center.y - 171.0),
+                                  Transform::IDENTITY, 6.1, &curr_class_key[..])?;
+
         //Draw Players
         for player in self.player_ref.iter() {
             let player_pos = player.get_pos()?;
@@ -146,43 +283,97 @@ impl ElderGame {
                                                window_center.y - 300.0 + (40.0 * player_pos.y) + 18.0), Transform::IDENTITY, 5.0, player_key)?;
         }
 
-        // Draw label text, should always render on top to show the state the game is in
+        // Draw Menu Labels
+        draw_ex_with_center(window, &mut self.controls_text, Vector::new(window_center.x - 303.0, window_center.y + 135.0),
+                            Transform::IDENTITY, 8.01)?;
+        draw_ex_with_center(window, &mut self.class_text, Vector::new(window_center.x - 303.0, window_center.y - 235.0),
+                            Transform::IDENTITY, 8.02)?;
+        draw_ex_with_center(window, &mut self.info_text, Vector::new(window_center.x + 303.0, window_center.y - 235.0),
+                            Transform::IDENTITY, 8.03)?;
+        draw_ex_with_center(window, &mut self.abilities_text, Vector::new(window_center.x + 303.0, window_center.y + 135.0),
+                            Transform::IDENTITY, 8.04)?;
+
+        //Get Player Info and calculate current bar size
+        let player_team = self.player_ref[self.curr_player].get_player()?;
+
+        let player_max_hp = *self.player_ref[self.curr_player].get_stats()?.get_hp() as f32;
+        let player_hp = *self.player_ref[self.curr_player].get_stats()?.get_curr_hp() as f32;
+        let full_hp_px = 85.0;
+        let curr_hp_px: f32 = (player_hp / player_max_hp) * full_hp_px;
+
+        let player_max_moves = *self.player_ref[self.curr_player].get_stats()?.get_speed() as f32;
+        let player_moves = self.moves as f32;
+        let full_mv_px = 55.0;
+        let curr_mv_px: f32 = (player_moves / player_max_moves) * full_mv_px;
+
+            //Draw Info Menu Labels
+        draw_ex_with_center(window, &mut self.hp_label, Vector::new(window_center.x + 260.0, window_center.y - 201.0),
+                            Transform::IDENTITY, 8.041)?;
+        draw_ex_with_center(window, &mut self.move_label, Vector::new(window_center.x + 274.0, window_center.y - 171.0),
+                            Transform::IDENTITY, 8.042)?;
+        draw_ex_with_center(window, &mut self.team_label, Vector::new(window_center.x + 274.0, window_center.y - 141.0),
+                            Transform::IDENTITY, 8.043)?;
+        //Draw Menu Items
+        //Team Labels
+        match player_team {
+            PlayerType::Player1 => {
+                draw_ex_with_center(window, &mut self.elder_label, Vector::new(window_center.x + 334.0, window_center.y - 141.0),
+                                    Transform::IDENTITY, 8.044)?;},
+            PlayerType::Player2 => {
+                draw_ex_with_center(window, &mut self.sat_label, Vector::new(window_center.x + 334.0, window_center.y - 141.0),
+                                    Transform::IDENTITY, 8.045)?;},
+            _ => {/*Ignore Undetermined*/},
+        };
+        //Draw Move and HP meters
+        let hp_bar = Rectangle::new(Vector::new(window_center.x + 282.0, window_center.y - 208.0), (full_hp_px, 13.0));
+        let curr_hp_bar = Rectangle::new(Vector::new(window_center.x + 282.0, window_center.y - 208.0), (curr_hp_px, 13.0));
+        window.draw_ex(&hp_bar, Col(Color::RED.with_alpha(0.5)), Transform::IDENTITY, 8.046);
+        window.draw_ex(&curr_hp_bar, Col(Color::RED), Transform::IDENTITY, 8.047);
+        let move_bar = Rectangle::new(Vector::new(window_center.x + 310.0, window_center.y - 178.0), (full_mv_px, 13.0));
+        let curr_move_bar = Rectangle::new(Vector::new(window_center.x + 310.0, window_center.y - 178.0), (curr_mv_px, 13.0));
+        window.draw_ex(&move_bar, Col(Color::BLUE.with_alpha(0.5)), Transform::IDENTITY, 8.047);
+        window.draw_ex(&curr_move_bar, Col(Color::BLUE), Transform::IDENTITY, 8.048);
+
+        // Draw State Indicator
+        match self.action_state {
+            ActionType::Move => {
+                draw_ex_with_center(window, &mut self.underline, Vector::new(window_center.x - 301.0, window_center.y + 186.0),
+                                    Transform::IDENTITY, 8.05)?; },
+            ActionType::Action => {
+                draw_ex_with_center(window, &mut self.underline, Vector::new(window_center.x - 301.0, window_center.y + 216.0),
+                                    Transform::IDENTITY, 8.05)?; },
+            ActionType::End => {
+                draw_ex_with_center(window, &mut self.underline, Vector::new(window_center.x - 301.0, window_center.y + 246.0),
+                                    Transform::IDENTITY, 8.05)?; }
+        }
+
+        // Draw label text items, should always render on top to show the state the game is in
+        draw_ex_with_center(window, &mut self.move_grey, Vector::new(window_center.x - 303.0, window_center.y + 175.0),
+                            Transform::IDENTITY, 8.11)?;
+        draw_ex_with_center(window, &mut self.action_grey, Vector::new(window_center.x - 303.0, window_center.y + 205.0),
+                            Transform::IDENTITY, 8.12)?;
+        draw_ex_with_center(window, &mut self.end_grey, Vector::new(window_center.x - 303.0, window_center.y + 235.0),
+                            Transform::IDENTITY, 8.13)?;
+
+        //Render the white button if the player can do the action
+        if self.moves > 0 {
+            draw_ex_with_center(window, &mut self.move_text, Vector::new(window_center.x - 303.0, window_center.y + 175.0),
+                                Transform::IDENTITY, 8.21)?; }
+        if self.actions > 0 {
+            draw_ex_with_center(window, &mut self.action_text, Vector::new(window_center.x - 303.0, window_center.y + 205.0),
+                                Transform::IDENTITY, 8.22)?; }
+        if !self.end_flag {
+            draw_ex_with_center(window, &mut self.end_text, Vector::new(window_center.x - 303.0, window_center.y + 235.0),
+                                Transform::IDENTITY, 8.23)?; }
+
         draw_ex_with_center(window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0),
-        Transform::IDENTITY, 7.0)?;
+        Transform::IDENTITY, 8.4)?;
 
         Ok(())
     }
 
     /// Handle various sorts of events, https://docs.rs/quicksilver/0.3.16/quicksilver/lifecycle/enum.Event.html
-    #[allow(unreachable_patterns, dead_code)]
-    pub fn event(&mut self, event: &Event, _window: &mut Window) -> Result<()> {
-        use ButtonState::*;
-
-        let player: Entity = self.player_ref[self.curr_player];
-        let curr_loc = player.get_pos()?;
-
-        match event {
-            Event::Key(k, bs) => {
-                if *bs == Pressed {
-                    let new_loc = match k {
-                            Key::W => { Vector::new(curr_loc.x, curr_loc.y - 1.0)},
-                            Key::S => { Vector::new(curr_loc.x, curr_loc.y + 1.0)},
-                            Key::A => { Vector::new(curr_loc.x - 1.0, curr_loc.y)},
-                            Key::D => { Vector::new(curr_loc.x + 1.0, curr_loc.y)},
-                            _       => { curr_loc },
-                    };
-
-                    if self.player_ref[self.curr_player].can_move(new_loc, &self.game_board, &self.player_ref)? {
-                        self.player_ref[self.curr_player].set_pos(new_loc)?;
-                        //self.next_turn()?;
-                    } else {
-                        //println!("Can't Move!");
-                    }
-                }
-            },
-            _ => {},
-        }
-
+    pub fn event(&mut self, _event: &Event, _window: &mut Window) -> Result<()> {
         Ok(())
     }
 
@@ -192,28 +383,27 @@ impl ElderGame {
         Ok(self.winner)
     }
 
-
-    ///Shifts index to the next player's turn
+    ///Shifts index to the next player's turn, and sets variables
     pub fn next_turn(&mut self) -> Result<()> {
-        if self.curr_player as usize >= self.player_ref.len() - 1 { //Time to reset
-            self.curr_player = 0;
-        } else {
-            self.curr_player += 1;
-        }
+        self.curr_player = self.turn_order.next().expect("Cannot find next player index game::next_turn");
+        self.moves = *self.player_ref[self.curr_player].get_stats()?.get_speed();
+        self.actions = *self.player_ref[self.curr_player].get_stats()?.get_actions();
+        self.action_state = ActionType::Move;
+        self.end_flag = false;
+
         Ok(())
     }
 
-    ///Shifts index to the selected players turn
-    pub fn set_turn(&mut self, player_index: usize) -> Result<bool> {
-        let mut set_player = true; //Assume truth and disprove if needed
+    ///Tries to move a player, returns true if moved, false otherwise
+    pub fn try_move(&mut self, new_loc: Vector) -> Result<bool> {
+        let mut retval= false;
 
-        if player_index <= self.player_ref.len() - 1 {
-            self.curr_player = player_index;
-        } else {
-            set_player = false;
+        if self.player_ref[self.curr_player].can_move(new_loc, &self.game_board, &self.player_ref)? {
+            self.player_ref[self.curr_player].set_pos(new_loc)?;
+            retval = true;
         }
 
-        Ok(set_player)
+        Ok(retval)
     }
 
 }

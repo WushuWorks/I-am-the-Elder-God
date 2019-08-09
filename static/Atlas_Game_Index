@@ -1,5 +1,5 @@
 HunterTokens.png
-size: 165, 120
+size: 315, 215
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
@@ -87,9 +87,31 @@ Trapper_4
  orig: 40, 40
  offset: 0, 0
  index: -1
+SupportClass
+ rotate: false
+ xy: 0, 135
+ size: 130, 80
+ orig: 130, 80
+ offset: 0, 0
+ index: -1
+TrapperClass
+ rotate: false
+ xy: 185, 0
+ size: 130, 80
+ orig: 130, 80
+ offset: 0, 0
+ index: -1
+AssaultClass
+ rotate: false
+ xy: 185, 90
+ size: 130, 80
+ orig: 130, 80
+ offset: 0, 0
+ index: -1
+
 
 MonsterTokens.png
-size: 110, 250
+size: 250, 250
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
@@ -119,6 +141,27 @@ DeadGod
  xy: 50, 0
  size: 30, 30
  orig: 30, 30
+ offset: 0, 0
+ index: -1
+WraithClass
+ rotate: false
+ xy: 120, 0
+ size: 130, 80
+ orig: 130, 80
+ offset: 0, 0
+ index: -1
+KrakenClass
+ rotate: false
+ xy: 120, 85
+ size: 130, 80
+ orig: 130, 80
+ offset: 0, 0
+ index: -1
+ElderClass
+ rotate: false
+ xy: 120, 170
+ size: 130, 80
+ orig: 130, 80
  offset: 0, 0
  index: -1
 
@@ -160,5 +203,32 @@ S
  xy: 45, 0
  size: 30, 30
  orig: 40, 40
+ offset: 0, 0
+ index: -1
+
+PHMenus.png
+size: 310, 500
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+SmallWide
+ rotate: false
+ xy: 0, 0
+ size: 190, 90
+ orig: 190, 90
+ offset: 0, 0
+ index: -1
+SmallSquare
+ rotate: false
+ xy: 0, 95
+ size: 150, 150
+ orig: 150, 150
+ offset: 0, 0
+ index: -1
+TallThin
+ rotate: false
+ xy: 210, 0
+ size: 120, 500
+ orig: 120, 500
  offset: 0, 0
  index: -1

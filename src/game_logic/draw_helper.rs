@@ -2,6 +2,7 @@
 use quicksilver::prelude::*;
 use quicksilver::graphics::Atlas;
 
+/*
 /// Draws a standard image from the center to the passed vector
 pub fn draw_with_center(window: &mut Window, image: &mut Asset<Image>, coordinate: Vector) -> Result<()> {
     image.execute(|image| {
@@ -15,6 +16,7 @@ pub fn draw_with_center(window: &mut Window, image: &mut Asset<Image>, coordinat
     })?;
     Ok(())
 }
+*/
 
 /// Draws a standard image from the center to the passed vector to the specified layer
 pub fn draw_ex_with_center(window: &mut Window, image: &mut Asset<Image>, coordinate: Vector, transform: Transform, layer: f32) -> Result<()> {
@@ -45,7 +47,7 @@ pub fn draw_translate(window: &mut Window, image: &mut Asset<Image>, coordinate:
     })?;
     Ok(())
 }
-*/
+
 
 ///Draws something from an Atlas at the given coordinates
 pub fn draw_atlas_with_center(window: &mut Window, atlas: &mut Asset<Atlas>, coordinate: Vector, key: &str) -> Result<()> {
@@ -59,7 +61,7 @@ pub fn draw_atlas_with_center(window: &mut Window, atlas: &mut Asset<Atlas>, coo
     })?;
     Ok(())
 }
-
+*/
 ///Draws something from an Atlas at the given coordinates
 pub fn draw_ex_atlas_with_center(window: &mut Window, atlas: &mut Asset<Atlas>, coordinate: Vector, transform: Transform, layer: f32, key: &str) -> Result<()> {
     atlas.execute(|image| {
