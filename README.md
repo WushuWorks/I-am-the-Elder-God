@@ -29,7 +29,7 @@ Visit the project [website](https://www.wushuworks.com/projects/i-am-the-elder-g
 
 # Supported Browsers
 
-In order of *best to least beast*
+In order of *best to least best*
 
 Firefox, Opera, Chrome
 
