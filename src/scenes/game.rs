@@ -20,6 +20,7 @@ enum ActionType {
 pub struct ElderGame {
     game_background: Asset<Image>,
     game_overlay: Asset<Image>,
+
     //Label Text
     text: Asset<Image>,
     controls_text: Asset<Image>,
@@ -36,6 +37,12 @@ pub struct ElderGame {
     action_grey: Asset<Image>,
     end_grey: Asset<Image>,
 
+    //Stat Labels
+    hp_label: Asset<Image>,
+    move_label: Asset<Image>,
+    team_label: Asset<Image>,
+    sat_label: Asset<Image>,
+    elder_label: Asset<Image>,
 
     //game_board layer
     game_board: GameBoard,
@@ -48,8 +55,8 @@ pub struct ElderGame {
     //Turn control data - [Move, Action, End]
     end_flag: bool,
     action_state: ActionType,
-    max_moves: u32,
-    max_actions: u32,
+    moves: u32,
+    actions: u32,
 
     //Atlas supports keys A-Z, Blank (# is the same tile), and Null (with the '-' key)
     game_tiles: Asset<Atlas>,
@@ -95,6 +102,18 @@ impl ElderGame {
             font.render("[A]ction", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
         let end_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("[E]nd", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        //Stat Labels
+        let sat_label = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("SAT", &FontStyle::new(14.0, Color::WHITE), )}));
+        let elder_label = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("GOD", &FontStyle::new(14.0, Color::WHITE),)}));
+        //Menu Words
+        let hp_label = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("HP:", &FontStyle::new(14.0, Color::WHITE), )}));
+        let move_label = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Move:", &FontStyle::new(14.0, Color::WHITE), )}));
+        let team_label = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Team:", &FontStyle::new(14.0, Color::WHITE),)}));
 
         //Create players
         let wraith = Entity::new_char(ClassType::Wraith, PlayerType::Player1,
@@ -127,6 +146,7 @@ impl ElderGame {
             underline: Asset::new(Image::load(underline)),
             move_text, action_text, end_text,
             move_grey, action_grey, end_grey,
+            hp_label, move_label, team_label, sat_label, elder_label,
 
             game_board: GameBoard::new().expect("Failed to load GameBoard in scenes::game::ElderGame::new"),
             player_ref,
@@ -136,8 +156,7 @@ impl ElderGame {
             //Turn control data
             end_flag: false,
             action_state: ActionType::Move,
-            max_moves: moves,
-            max_actions: actions,
+            moves, actions,
 
             game_tiles: Asset::new(Atlas::load(atlas_index)),
             token_tiles: Asset::new(Atlas::load(game_atlas_index)),
@@ -157,14 +176,14 @@ impl ElderGame {
         let mut acted = false;
 
         //Change ActionState - disallow swap if nonsensical
-        if kb[Key::M] == Pressed && self.max_moves > 0   {self.action_state = ActionType::Move;}
-        if kb[Key::A] == Pressed && self.max_actions > 0 {self.action_state = ActionType::Action;}
-        if kb[Key::E] == Pressed                         {self.action_state = ActionType::End;}
+        if kb[Key::M] == Pressed && self.moves > 0   {self.action_state = ActionType::Move;}
+        if kb[Key::A] == Pressed && self.actions > 0 {self.action_state = ActionType::Action;}
+        if kb[Key::E] == Pressed                     {self.action_state = ActionType::End;}
 
         //Only accept commands when the player can do something
         match self.action_state {
             ActionType::Move => {
-                if self.max_moves > 0 {
+                if self.moves > 0 {
                     if kb[Key::Up] == Pressed { moved = self.try_move(Vector::new(curr_loc.x, curr_loc.y - 1.0))?; }
                     else if kb[Key::Left] == Pressed { moved = self.try_move(Vector::new(curr_loc.x - 1.0, curr_loc.y))?;}
                     else if kb[Key::Down] == Pressed { moved = self.try_move(Vector::new(curr_loc.x, curr_loc.y + 1.0))?;}
@@ -172,7 +191,7 @@ impl ElderGame {
                 }
             },
             ActionType::Action => {
-                if self.max_actions > 0 {
+                if self.actions > 0 {
                     if kb[Key::Q] == Pressed { acted = true; }
                 }
             },
@@ -184,11 +203,11 @@ impl ElderGame {
 
         if moved {
             moved = false;
-            self.max_moves -= 1;
+            self.moves -= 1;
         }
         if acted {
             acted = false;
-            self.max_actions -= 1;
+            self.actions -= 1;
         }
 
         if kb[Key::Key0] == Pressed {
@@ -248,6 +267,7 @@ impl ElderGame {
                                       Vector::new(window_center.x - 303.0 * offset.x, window_center.y - 185.0 * offset.y),
                                       Transform::IDENTITY, 6.0, "SmallSquare")?;
         }
+        
         //Draw Selected Player Class Label
         let curr_class_key = self.player_ref[self.curr_player].get_class()?.key().to_owned() + "Class";
         draw_ex_atlas_with_center(window, &mut self.token_tiles,
@@ -273,6 +293,47 @@ impl ElderGame {
         draw_ex_with_center(window, &mut self.abilities_text, Vector::new(window_center.x + 303.0, window_center.y + 135.0),
                             Transform::IDENTITY, 8.04)?;
 
+        //Get Player Info and calculate current bar size
+        let player_team = self.player_ref[self.curr_player].get_player()?;
+
+        let player_max_hp = *self.player_ref[self.curr_player].get_stats()?.get_hp() as f32;
+        let player_hp = *self.player_ref[self.curr_player].get_stats()?.get_curr_hp() as f32;
+        let full_hp_px = 85.0;
+        let curr_hp_px: f32 = (player_hp / player_max_hp) * full_hp_px;
+
+        let player_max_moves = *self.player_ref[self.curr_player].get_stats()?.get_speed() as f32;
+        let player_moves = self.moves as f32;
+        let full_mv_px = 55.0;
+        let curr_mv_px: f32 = (player_moves / player_max_moves) * full_mv_px;
+
+            //Draw Info Menu Labels
+        draw_ex_with_center(window, &mut self.hp_label, Vector::new(window_center.x + 260.0, window_center.y - 201.0),
+                            Transform::IDENTITY, 8.041)?;
+        draw_ex_with_center(window, &mut self.move_label, Vector::new(window_center.x + 274.0, window_center.y - 171.0),
+                            Transform::IDENTITY, 8.042)?;
+        draw_ex_with_center(window, &mut self.team_label, Vector::new(window_center.x + 274.0, window_center.y - 141.0),
+                            Transform::IDENTITY, 8.043)?;
+        //Draw Menu Items
+        //Team Labels
+        match player_team {
+            PlayerType::Player1 => {
+                draw_ex_with_center(window, &mut self.elder_label, Vector::new(window_center.x + 334.0, window_center.y - 141.0),
+                                    Transform::IDENTITY, 8.044)?;},
+            PlayerType::Player2 => {
+                draw_ex_with_center(window, &mut self.sat_label, Vector::new(window_center.x + 334.0, window_center.y - 141.0),
+                                    Transform::IDENTITY, 8.045)?;},
+            _ => {/*Ignore Undetermined*/},
+        };
+        //Draw Move and HP meters
+        let hp_bar = Rectangle::new(Vector::new(window_center.x + 282.0, window_center.y - 208.0), (full_hp_px, 13.0));
+        let curr_hp_bar = Rectangle::new(Vector::new(window_center.x + 282.0, window_center.y - 208.0), (curr_hp_px, 13.0));
+        window.draw_ex(&hp_bar, Col(Color::RED.with_alpha(0.5)), Transform::IDENTITY, 8.046);
+        window.draw_ex(&curr_hp_bar, Col(Color::RED), Transform::IDENTITY, 8.047);
+        let move_bar = Rectangle::new(Vector::new(window_center.x + 310.0, window_center.y - 178.0), (full_mv_px, 13.0));
+        let curr_move_bar = Rectangle::new(Vector::new(window_center.x + 310.0, window_center.y - 178.0), (curr_mv_px, 13.0));
+        window.draw_ex(&move_bar, Col(Color::BLUE.with_alpha(0.5)), Transform::IDENTITY, 8.047);
+        window.draw_ex(&curr_move_bar, Col(Color::BLUE), Transform::IDENTITY, 8.048);
+
         // Draw State Indicator
         match self.action_state {
             ActionType::Move => {
@@ -295,10 +356,10 @@ impl ElderGame {
                             Transform::IDENTITY, 8.13)?;
 
         //Render the white button if the player can do the action
-        if self.max_moves > 0 {
+        if self.moves > 0 {
             draw_ex_with_center(window, &mut self.move_text, Vector::new(window_center.x - 303.0, window_center.y + 175.0),
                                 Transform::IDENTITY, 8.21)?; }
-        if self.max_actions > 0 {
+        if self.actions > 0 {
             draw_ex_with_center(window, &mut self.action_text, Vector::new(window_center.x - 303.0, window_center.y + 205.0),
                                 Transform::IDENTITY, 8.22)?; }
         if !self.end_flag {
@@ -325,8 +386,8 @@ impl ElderGame {
     ///Shifts index to the next player's turn, and sets variables
     pub fn next_turn(&mut self) -> Result<()> {
         self.curr_player = self.turn_order.next().expect("Cannot find next player index game::next_turn");
-        self.max_moves = *self.player_ref[self.curr_player].get_stats()?.get_speed();
-        self.max_actions = *self.player_ref[self.curr_player].get_stats()?.get_actions();
+        self.moves = *self.player_ref[self.curr_player].get_stats()?.get_speed();
+        self.actions = *self.player_ref[self.curr_player].get_stats()?.get_actions();
         self.action_state = ActionType::Move;
         self.end_flag = false;
 

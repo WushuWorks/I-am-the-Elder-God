@@ -45,6 +45,7 @@ impl ClassType {
 #[derive(Debug, Clone, Copy)]
 pub struct Attributes {
     hp: i32,
+    curr_hp: i32,
     speed: u32,
     armor: i32,
     power: i32,
@@ -54,10 +55,11 @@ pub struct Attributes {
 #[allow(unused)]
 impl Attributes {
     /// Initialize universal stats
-    pub fn new() -> Self { Self{hp: 1, speed: 0, armor: 1, power: 1, actions: 0} }
+    pub fn new() -> Self { Self{hp: 1, curr_hp: 1, speed: 0, armor: 1, power: 1, actions: 0} }
     /// Sets stats for a class
     pub fn set_class(&mut self, class: &ClassType) -> Result<Self> {
         let hp: i32;
+        let curr_hp: i32;
         let speed: u32;
         let armor: i32;
         let power: i32;
@@ -114,13 +116,15 @@ impl Attributes {
                         actions = 1;
                     }
         }
+        curr_hp = hp;
 
-        Ok(Self{hp, speed, armor, power, actions})
+        Ok(Self{hp, curr_hp, speed, armor, power, actions})
     }
-    pub fn set_custom_stats(&mut self, hp: i32, speed: u32, armor: i32, power: i32, actions: u32) -> Result<Self> {
-        Ok(Self{hp, speed, armor, power, actions})
+    pub fn set_custom_stats(&mut self, hp: i32, curr_hp: i32, speed: u32, armor: i32, power: i32, actions: u32) -> Result<Self> {
+        Ok(Self{hp, curr_hp, speed, armor, power, actions})
     }
     pub fn get_hp(&self) -> &i32 { &self.hp }
+    pub fn get_curr_hp(&self) -> &i32 { &self.curr_hp }
     pub fn get_speed(&self) -> &u32{ &self.speed }
     pub fn get_armor(&self) -> &i32{ &self.armor }
     pub fn get_power(&self) -> &i32{ &self.power }
@@ -142,11 +146,11 @@ pub struct Entity {
 #[allow(unused)]
 impl Entity{
     /// Makes class-less character
-    pub fn new_npc(player: PlayerType, hp: i32, speed: u32, armor: i32, power: i32, actions: u32, pos: Vector, invincible: bool, tangible: bool) -> Result<Self> {
+    pub fn new_npc(player: PlayerType, hp: i32, curr_hp: i32, speed: u32, armor: i32, power: i32, actions: u32, pos: Vector, invincible: bool, tangible: bool) -> Result<Self> {
         Ok(Self{
             player,
             class: ClassType::NPC,
-            stats: Attributes::new().set_custom_stats(hp, speed, armor, power, actions).expect("Cannot create npc with given stats"),
+            stats: Attributes::new().set_custom_stats(hp, curr_hp, speed, armor, power, actions).expect("Cannot create npc with given stats"),
             pos,
             invincible,
             tangible,

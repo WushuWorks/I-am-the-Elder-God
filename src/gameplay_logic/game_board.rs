@@ -23,7 +23,7 @@ fn generate_map(size: Vector, level: Vec<String>, level_condition: Vec<String>) 
             let tile_key = loaded_level.next().expect("Tried to allocate wrong sized level");
             let tile_cond_key = loaded_level_conditions.next().expect("Tried to allocate wrong sized level");
 
-            let placeholder = Entity::new_npc(PlayerType::Undetermined, 0,0,0,0, 0,
+            let placeholder = Entity::new_npc(PlayerType::Undetermined, 0,0,0,0, 0, 0,
                                               Vector::new(x as f32,y as f32), true, false)
                                                    .expect("Cannot allocate placeholder NPC in Cell::new.");
 
@@ -54,7 +54,7 @@ pub struct Cell {
 #[allow(unused)]
 impl Cell {
     pub fn new() -> Self {
-        let placeholder = Entity::new_npc(PlayerType::Undetermined, 0,0,0,0, 0,
+        let placeholder = Entity::new_npc(PlayerType::Undetermined, 0,0,0,0, 0, 0,
                                            Vector::new(0.0,0.0), true, false)
                                                 .expect("Cannot allocate placeholder NPC in Cell::new.");
         Self{
