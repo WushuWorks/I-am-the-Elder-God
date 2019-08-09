@@ -13,20 +13,6 @@ pub enum PlayerType {
     Undetermined,
 }
 
-/*
-impl PlayerType {
-    /// Map enum to an index number if possible
-    /// PLayer1 -> 1, Player2 -> 2, Undetermined -> 0
-    pub fn key(&self) -> usize {
-        match self {
-            PlayerType::Player1 => {1},
-            PlayerType::Player2 => {2},
-            PlayerType::Undetermined => {0},
-        }
-    }
-}
-*/
-
 #[derive(Debug, PartialEq, Clone, Copy)]
 #[allow(unused)]
 pub enum ClassType {
@@ -57,24 +43,25 @@ impl ClassType {
 /// Describes the attributes of a particular class
 #[allow(unused)]
 #[derive(Debug, Clone, Copy)]
-struct Attributes {
+pub struct Attributes {
     hp: i32,
     speed: u32,
     armor: i32,
     power: i32,
+    actions: u32,
 }
 
 #[allow(unused)]
 impl Attributes {
     /// Initialize universal stats
-    pub fn new() -> Self { Self{hp: 1, speed: 0, armor: 1, power: 1} }
+    pub fn new() -> Self { Self{hp: 1, speed: 0, armor: 1, power: 1, actions: 0} }
     /// Sets stats for a class
     pub fn set_class(&mut self, class: &ClassType) -> Result<Self> {
         let hp: i32;
         let speed: u32;
         let armor: i32;
         let power: i32;
-
+        let actions: u32;
         //Attribute allocation
         match class {
                     ClassType::Support => {
@@ -82,52 +69,62 @@ impl Attributes {
                         speed = 3;
                         armor = 2;
                         power = 2;
+                        actions = 1;
                     },
                     ClassType::Assault => {
                         hp = 90;
                         speed = 4;
                         armor = 1;
                         power = 4;
+                        actions = 1;
                     },
                     ClassType::Trapper => {
                         hp = 100;
                         speed = 3;
                         armor = 2;
                         power = 2;
+                        actions = 1;
                     }
                     ClassType::Wraith => {
                         hp = 100;
                         speed = 4;
                         armor = 2;
                         power = 2;
+                        actions = 1;
                     },
                     ClassType::Kraken => {
                         hp = 250;
                         speed = 3;
                         armor = 4;
                         power = 4;
+                        actions = 1;
                     },
                     ClassType::Elder => {
                         hp = 500;
                         speed = 3;
                         armor = 2;
                         power = 2;
+                        actions = 2;
                     }
                     ClassType::NPC => {
                         hp = 1;
                         speed = 1;
                         armor = 1;
                         power = 1;
+                        actions = 1;
                     }
         }
 
-        Ok(Self{hp, speed, armor, power,})
+        Ok(Self{hp, speed, armor, power, actions})
     }
-    pub fn set_custom_stats(&mut self, hp: i32, speed: u32, armor: i32, power: i32) -> Result<Self> {Ok(Self{hp, speed, armor, power})}
+    pub fn set_custom_stats(&mut self, hp: i32, speed: u32, armor: i32, power: i32, actions: u32) -> Result<Self> {
+        Ok(Self{hp, speed, armor, power, actions})
+    }
     pub fn get_hp(&self) -> &i32 { &self.hp }
     pub fn get_speed(&self) -> &u32{ &self.speed }
     pub fn get_armor(&self) -> &i32{ &self.armor }
     pub fn get_power(&self) -> &i32{ &self.power }
+    pub fn get_actions(&self) -> &u32{ &self.actions }
 }
 
 /// This models the most universal class
@@ -145,11 +142,11 @@ pub struct Entity {
 #[allow(unused)]
 impl Entity{
     /// Makes class-less character
-    pub fn new_npc(player: PlayerType, hp: i32, speed: u32, armor: i32, power: i32, pos: Vector, invincible: bool, tangible: bool) -> Result<Self> {
+    pub fn new_npc(player: PlayerType, hp: i32, speed: u32, armor: i32, power: i32, actions: u32, pos: Vector, invincible: bool, tangible: bool) -> Result<Self> {
         Ok(Self{
             player,
             class: ClassType::NPC,
-            stats: Attributes::new().set_custom_stats(hp, speed, armor, power).expect("Cannot create npc with given stats"),
+            stats: Attributes::new().set_custom_stats(hp, speed, armor, power, actions).expect("Cannot create npc with given stats"),
             pos,
             invincible,
             tangible,
@@ -171,6 +168,7 @@ impl Entity{
     pub fn get_class(&self) -> Result<&ClassType> { Ok(&self.class) }
     pub fn get_tangible(&self) -> Result<bool> { Ok(self.tangible) }
     pub fn get_pos(&self) -> Result<Vector> { Ok(self.pos) }
+    pub fn get_stats(&self) -> Result<&Attributes> { Ok(&self.stats) }
     /// Sets player info
     pub fn set_pos(&mut self, new_loc: Vector) -> Result<()> {
         self.pos = new_loc;
@@ -184,8 +182,6 @@ impl Entity{
         let land = *cell.get_land()?;
         let cond = *cell.get_cond()?;
         let occupant = cell.get_occupant()?;
-
-        //println!("Cell {:?}.", cell);
 
         if self.tangible { //If we are tangible we need to check for tangible barriers
             for player in players { //Check all players to see if there is a tangible player in location

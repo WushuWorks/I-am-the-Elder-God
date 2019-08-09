@@ -19,12 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # I am the Elder God Game
 
-Many specific details are currently in flux, and will change during development to suite
- what is practical and possible however the following elements are fairly certain as of writing.
+This will be a 3 vs 1 board game featuring a 'Support-Assault-Trapper' S.A.T. team  versus  Yt'kathl the Dream.
 
-1. This will be a 3 versus 1 board game
-2. This will be developed in 2D
-3. This will use square tiles
+    Unique player-class abilities
+    Evolving Eldritch enemy
+    Boardgame turn based gameplay.
 
 Visit the project [website](https://www.wushuworks.com/projects/i-am-the-elder-god) for more details
 
@@ -52,7 +51,7 @@ website [here](https://www.mozilla.org/)
 2. Run `cargo run --release`
 
 ## Web
-1. Clone to a repo of your choice
+1. Clone the repo to an IDE of your choice
 2. **If** `cargo-web` is not installed, run `cargo install cargo-web`
 3. Run `web start --release`
 4. Copy `http://[::1]:8000` into a Firefox of your choice
