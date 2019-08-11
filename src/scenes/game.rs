@@ -294,10 +294,12 @@ impl ElderGame {
 
                     if kb[Key::Return] == Pressed {
                         if self.player_ref[self.curr_player].can_act(self.curr_selection + 1, &self.game_board, &self.player_ref)? {
-                            println!("Used ability number {}.", self.curr_selection + 1);
+                            println!("Used {:?}'s {:?} ability.", self.player_ref[self.curr_player].get_class()?,
+                                     self.player_ref[self.curr_player].act(self.curr_selection + 1, &self.game_board, &self.player_ref)?);
                             self.actions -= 1;
                         } else {
-                            println!("Cannot use ability number {}.", self.curr_selection + 1);
+                            println!("Cannot use {:?}'s {:?} ability.", self.player_ref[self.curr_player].get_class()?,
+                                     self.player_ref[self.curr_player].act(self.curr_selection + 1, &self.game_board, &self.player_ref)?);
                         }
                     }
                 } else { //Being in the action state with no actions is nonsensical and forbidden

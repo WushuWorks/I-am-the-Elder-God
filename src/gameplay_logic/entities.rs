@@ -217,8 +217,49 @@ impl Entity{
         Ok(movable)
     }
 
-    /// Checks to see if this entity can use action #1, 2, or 3
+    /// Returns a string corresponding to the name of the passed ability number
     /// Accepts ability numbers 1-3 inclusively.
+    pub fn act(&self, action_index: u32, _board: &GameBoard, _players: &Vec<Entity>) -> Result<&str> {
+        let action = match self.class {
+            ClassType::Support  => {
+                match action_index {
+                    1 => { Ok("Bio") },
+                    2 => { Ok("Shield") },
+                    3 => { Ok("Renew") },
+                    _ => { panic!("Unknown Support Ability Number") }
+                }
+            },
+            ClassType::Assault  => {
+                match action_index {
+                    1 => { Ok("Pierce") },
+                    2 => { Ok("Grenade") },
+                    3 => { Ok("Airstrike") },
+                    _ => { panic!("Unknown Assault Ability Number") }
+                }
+            },
+            ClassType::Trapper  => {
+                match action_index {
+                    1 => { Ok("Caltrop") },
+                    2 => { Ok("Spear") },
+                    3 => { Ok("Cage") },
+                    _ => { panic!("Unknown Trapper Ability Number") }
+                }
+            },
+            ClassType::Wraith   => {
+                match action_index {
+                    1 => { Ok("Drain") },
+                    2 => { Ok("Decoy") },
+                    3 => { Ok("Rend") },
+                    _ => { panic!("Unknown Wraith Ability Number") }
+                }
+            },
+            _                   => { panic!("Unsupported Class for abilities") }
+        };
+
+        action
+    }
+
+    /// Returns true if an ability from 1-3, inclusively, can be used. False otherwise
     pub fn can_act(&self, action_index: u32, _board: &GameBoard, _players: &Vec<Entity>) -> Result<bool> {
         let actable = match self.class {
             ClassType::Support  => {
