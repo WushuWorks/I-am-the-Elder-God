@@ -21,28 +21,40 @@ pub struct ElderGame {
     game_background: Asset<Image>,
     game_overlay: Asset<Image>,
 
-    //Label Text
-    text: Asset<Image>,
+    //Text
+    //Help
+    move_help: Asset<Image>,
+    action_help: Asset<Image>,
+    end_help: Asset<Image>,
+    //Menu Labels
     controls_text: Asset<Image>,
     class_text: Asset<Image>,
     info_text: Asset<Image>,
     abilities_text: Asset<Image>,
     underline: Asset<Image>,
     //White
-    move_text: Asset<Image>,
-    action_text: Asset<Image>,
-    end_text: Asset<Image>,
+    move_text: Asset<Image>, action_text: Asset<Image>, end_text: Asset<Image>,
     //Grey
-    move_grey: Asset<Image>,
-    action_grey: Asset<Image>,
-    end_grey: Asset<Image>,
+    move_grey: Asset<Image>, action_grey: Asset<Image>, end_grey: Asset<Image>,
 
     //Stat Labels
     hp_label: Asset<Image>,
     move_label: Asset<Image>,
     team_label: Asset<Image>,
-    sat_label: Asset<Image>,
-    elder_label: Asset<Image>,
+    sat_label: Asset<Image>, elder_label: Asset<Image>,
+    //Class Ability Labels
+    //Wraith
+    drain_grey: Asset<Image>, decoy_grey: Asset<Image>, rend_grey: Asset<Image>,
+    drain_white: Asset<Image>, decoy_white: Asset<Image>, rend_white: Asset<Image>,
+    //Support
+    bio_grey: Asset<Image>, shield_grey: Asset<Image>, renew_grey: Asset<Image>,
+    bio_white: Asset<Image>, shield_white: Asset<Image>, renew_white: Asset<Image>,
+    //Assault
+    pierce_grey: Asset<Image>, grenade_grey: Asset<Image>, airraid_grey: Asset<Image>,
+    pierce_white: Asset<Image>, grenade_white: Asset<Image>, airraid_white: Asset<Image>,
+    //Trapper
+    caltrop_grey: Asset<Image>, spear_grey: Asset<Image>, cage_grey: Asset<Image>,
+    caltrop_white: Asset<Image>, spear_white: Asset<Image>, cage_white: Asset<Image>,
 
     //game_board layer
     game_board: GameBoard,
@@ -57,6 +69,8 @@ pub struct ElderGame {
     action_state: ActionType,
     moves: u32,
     actions: u32,
+    selections: Cycle<IntoIter<u32>>,
+    curr_selection: u32,
 
     //Atlas supports keys A-Z, Blank (# is the same tile), and Null (with the '-' key)
     game_tiles: Asset<Atlas>,
@@ -76,9 +90,68 @@ impl ElderGame {
         let game_atlas_index = "Atlas_Game_Index";
         let underline = "line.png";
 
-        //Font Load
-        let text_info = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Arrow Keys-Move, Q-Action, 0/1/2-end", &FontStyle::new(20.0, Color::BLACK), )}));
+        //Help text
+        let move_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Move-Arrow Keys, 0/1/2-end", &FontStyle::new(20.0, Color::BLACK), )}));
+        let action_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Action-Arrows+Enter, 0/1/2-end", &FontStyle::new(20.0, Color::BLACK), )}));
+        let end_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Ending turn... 0/1/2-end", &FontStyle::new(20.0, Color::BLACK), )}));
+
+        //Ability Labels
+        //Wraith
+        let drain_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Drain", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let decoy_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Decoy", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let rend_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Rend", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let drain_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Drain", &FontStyle::new(16.0, Color::WHITE), )}));
+        let decoy_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Decoy", &FontStyle::new(16.0, Color::WHITE), )}));
+        let rend_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Rend", &FontStyle::new(16.0, Color::WHITE), )}));
+        //Support
+        let bio_grey =  Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Bio", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let shield_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Shield", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let renew_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Renew", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let bio_white =  Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Bio", &FontStyle::new(16.0, Color::WHITE), )}));
+        let shield_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Shield", &FontStyle::new(16.0, Color::WHITE), )}));
+        let renew_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Renew", &FontStyle::new(16.0, Color::WHITE), )}));
+        //Assault
+        let pierce_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Pierce", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let grenade_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Grenade", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let airraid_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Air Raid", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let pierce_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Pierce", &FontStyle::new(16.0, Color::WHITE), )}));
+        let grenade_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Grenade", &FontStyle::new(16.0, Color::WHITE), )}));
+        let airraid_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Air Raid", &FontStyle::new(16.0, Color::WHITE), )}));
+        //Trapper
+        let caltrop_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Caltrop", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let spear_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Spear", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let cage_grey = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Cage", &FontStyle::new(16.0, Color::from_rgba(132, 126, 135, 255.0)), )}));
+        let caltrop_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Caltrop", &FontStyle::new(16.0, Color::WHITE), )}));
+        let spear_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Spear", &FontStyle::new(16.0, Color::WHITE), )}));
+        let cage_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Cage", &FontStyle::new(16.0, Color::WHITE), )}));
+
         let controls_text = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("[Press]", &FontStyle::new(17.0, Color::WHITE), )}));
         let class_text = Asset::new(Font::load(font_mononoki).and_then(|font| {
@@ -116,16 +189,16 @@ impl ElderGame {
             font.render("Team:", &FontStyle::new(14.0, Color::WHITE),)}));
 
         //Create players
-        let wraith = Entity::new_char(ClassType::Wraith, PlayerType::Player1,
+        let wraith = Entity::new_char(ClassType::Wraith, PlayerType::Player1, 1,
                                       Vector::new(9,11), false)
                                         .expect("Cannot create Wraith game::new.");
-        let support = Entity::new_char(ClassType::Support, PlayerType::Player2,
+        let support = Entity::new_char(ClassType::Support, PlayerType::Player2, 1,
                                        Vector::new(6,4), false)
             .expect("Cannot create Support game::new.");
-        let assault = Entity::new_char(ClassType::Assault, PlayerType::Player2,
+        let assault = Entity::new_char(ClassType::Assault, PlayerType::Player2, 1,
                                        Vector::new(9,3), false)
             .expect("Cannot create Assault game::new.");
-        let trapper = Entity::new_char(ClassType::Trapper, PlayerType::Player2,
+        let trapper = Entity::new_char(ClassType::Trapper, PlayerType::Player2, 1,
                                        Vector::new(12,4), false)
             .expect("Cannot create Trapper game::new.");
 
@@ -138,15 +211,35 @@ impl ElderGame {
         let moves = *player_ref[curr_player].get_stats()?.get_speed() as u32;
         let actions = *player_ref[curr_player].get_stats()?.get_actions() as u32;
 
+        //Setup ability selection
+        let mut selections = vec![0,1,2].into_iter().cycle();
+        let curr_selection = selections.next().expect("Cannot find first selection");
+
         Ok(Self {
             game_background: Asset::new(Image::load(background)),
             game_overlay: Asset::new(Image::load(overlay)),
-            text: text_info,
+            move_help, action_help, end_help,
             controls_text, class_text, info_text, abilities_text,
             underline: Asset::new(Image::load(underline)),
+            //[Press] Labels
             move_text, action_text, end_text,
             move_grey, action_grey, end_grey,
+            //Menu Labels
             hp_label, move_label, team_label, sat_label, elder_label,
+
+            //Class Ability Labels
+            //Wraith
+            drain_grey, decoy_grey, rend_grey,
+            drain_white, decoy_white, rend_white,
+            //Support
+            bio_grey, shield_grey, renew_grey,
+            bio_white, shield_white, renew_white,
+            //Assault
+            pierce_grey, grenade_grey, airraid_grey,
+            pierce_white, grenade_white, airraid_white,
+            //Trapper
+            caltrop_grey, spear_grey, cage_grey,
+            caltrop_white, spear_white, cage_white,
 
             game_board: GameBoard::new().expect("Failed to load GameBoard in scenes::game::ElderGame::new"),
             player_ref,
@@ -157,6 +250,7 @@ impl ElderGame {
             end_flag: false,
             action_state: ActionType::Move,
             moves, actions,
+            selections, curr_selection,
 
             game_tiles: Asset::new(Atlas::load(atlas_index)),
             token_tiles: Asset::new(Atlas::load(game_atlas_index)),
@@ -176,13 +270,16 @@ impl ElderGame {
         let mut acted = false;
 
         //Change ActionState - disallow swap if nonsensical
-        if kb[Key::M] == Pressed && self.moves > 0   {self.action_state = ActionType::Move;}
-        if kb[Key::A] == Pressed && self.actions > 0 {self.action_state = ActionType::Action;}
-        if kb[Key::E] == Pressed                     {self.action_state = ActionType::End;}
+        if kb[Key::M] == Pressed && self.moves > 0   { self.action_state = ActionType::Move; }
+        if kb[Key::A] == Pressed && self.actions > 0 {
+            self.curr_selection = 0; //Selection should always be the first option to start
+            self.action_state = ActionType::Action;
+            }
+        if kb[Key::E] == Pressed                     { self.action_state = ActionType::End;}
 
         //Only accept commands when the player can do something
         match self.action_state {
-            ActionType::Move => {
+            ActionType::Move => { // Default to this state so players are not forced to explicitly end and no cycles are created
                 if self.moves > 0 {
                     if kb[Key::Up] == Pressed { moved = self.try_move(Vector::new(curr_loc.x, curr_loc.y - 1.0))?; }
                     else if kb[Key::Left] == Pressed { moved = self.try_move(Vector::new(curr_loc.x - 1.0, curr_loc.y))?;}
@@ -192,7 +289,19 @@ impl ElderGame {
             },
             ActionType::Action => {
                 if self.actions > 0 {
-                    if kb[Key::Q] == Pressed { acted = true; }
+                    if kb[Key::Up] == Pressed { self.prev_selection()?; }
+                    else if kb[Key::Down] == Pressed { self.next_selection()?;}
+
+                    if kb[Key::Return] == Pressed {
+                        if self.player_ref[self.curr_player].can_act(self.curr_selection + 1, &self.game_board, &self.player_ref)? {
+                            println!("Used ability number {}.", self.curr_selection + 1);
+                            self.actions -= 1;
+                        } else {
+                            println!("Cannot use ability number {}.", self.curr_selection + 1);
+                        }
+                    }
+                } else { //Being in the action state with no actions is nonsensical and forbidden
+                    self.action_state = ActionType::Move;
                 }
             },
             ActionType::End => {
@@ -213,14 +322,17 @@ impl ElderGame {
         if kb[Key::Key0] == Pressed {
             self.winner = PlayerType::Undetermined;
             retval = SceneReturn::Finished;
+            self.reset()?;
         }
         if kb[Key::Key1] == Pressed {
             self.winner = PlayerType::Player1;
             retval = SceneReturn::Finished;
+            self.reset()?;
         }
         if kb[Key::Key2] == Pressed {
             self.winner = PlayerType::Player2;
             retval = SceneReturn::Finished;
+            self.reset()?;
         }
 
         Ok(retval)
@@ -292,7 +404,7 @@ impl ElderGame {
         let player_team = self.player_ref[self.curr_player].get_player()?;
 
         let player_max_hp = *self.player_ref[self.curr_player].get_stats()?.get_hp() as f32;
-        let player_hp = *self.player_ref[self.curr_player].get_stats()?.get_curr_hp() as f32;
+        let player_hp = *self.player_ref[self.curr_player].get_curr_stats()?.get_hp() as f32;
         let full_hp_px = 85.0;
         let curr_hp_px: f32 = (player_hp / player_max_hp) * full_hp_px;
 
@@ -301,7 +413,7 @@ impl ElderGame {
         let full_mv_px = 55.0;
         let curr_mv_px: f32 = (player_moves / player_max_moves) * full_mv_px;
 
-            //Draw Info Menu Labels
+        //Draw Info Menu Labels
         draw_ex_with_center(window, &mut self.hp_label, Vector::new(window_center.x + 260.0, window_center.y - 201.0),
                             Transform::IDENTITY, 8.041)?;
         draw_ex_with_center(window, &mut self.move_label, Vector::new(window_center.x + 274.0, window_center.y - 171.0),
@@ -319,6 +431,7 @@ impl ElderGame {
                                     Transform::IDENTITY, 8.045)?;},
             _ => {/*Ignore Undetermined*/},
         };
+
         //Draw Move and HP meters
         let hp_bar = Rectangle::new(Vector::new(window_center.x + 282.0, window_center.y - 208.0), (full_hp_px, 13.0));
         let curr_hp_bar = Rectangle::new(Vector::new(window_center.x + 282.0, window_center.y - 208.0), (curr_hp_px, 13.0));
@@ -330,39 +443,99 @@ impl ElderGame {
         window.draw_ex(&curr_move_bar, Col(Color::BLUE), Transform::IDENTITY, 8.048);
 
         // Draw State Indicator
-        match self.action_state {
-            ActionType::Move => {
-                draw_ex_with_center(window, &mut self.underline, Vector::new(window_center.x - 301.0, window_center.y + 186.0),
-                                    Transform::IDENTITY, 8.05)?; },
-            ActionType::Action => {
-                draw_ex_with_center(window, &mut self.underline, Vector::new(window_center.x - 301.0, window_center.y + 216.0),
-                                    Transform::IDENTITY, 8.05)?; },
-            ActionType::End => {
-                draw_ex_with_center(window, &mut self.underline, Vector::new(window_center.x - 301.0, window_center.y + 246.0),
-                                    Transform::IDENTITY, 8.05)?; }
-        }
-
-        // Draw label text items, should always render on top to show the state the game is in
-        draw_ex_with_center(window, &mut self.move_grey, Vector::new(window_center.x - 303.0, window_center.y + 175.0),
-                            Transform::IDENTITY, 8.11)?;
-        draw_ex_with_center(window, &mut self.action_grey, Vector::new(window_center.x - 303.0, window_center.y + 205.0),
-                            Transform::IDENTITY, 8.12)?;
-        draw_ex_with_center(window, &mut self.end_grey, Vector::new(window_center.x - 303.0, window_center.y + 235.0),
-                            Transform::IDENTITY, 8.13)?;
+        let y_offset = match self.action_state {
+            ActionType::Move => { 186.0 },
+            ActionType::Action => { 216.0 },
+            ActionType::End => { 246.0 }
+        };
+        draw_ex_with_center(window, &mut self.underline, Vector::new(window_center.x - 301.0, window_center.y + y_offset),
+                            Transform::IDENTITY, 8.05)?;
 
         //Render the white button if the player can do the action
-        if self.moves > 0 {
-            draw_ex_with_center(window, &mut self.move_text, Vector::new(window_center.x - 303.0, window_center.y + 175.0),
-                                Transform::IDENTITY, 8.21)?; }
-        if self.actions > 0 {
-            draw_ex_with_center(window, &mut self.action_text, Vector::new(window_center.x - 303.0, window_center.y + 205.0),
-                                Transform::IDENTITY, 8.22)?; }
-        if !self.end_flag {
-            draw_ex_with_center(window, &mut self.end_text, Vector::new(window_center.x - 303.0, window_center.y + 235.0),
-                                Transform::IDENTITY, 8.23)?; }
+        let mut move_text = &mut self.move_grey;
+        let mut action_text = &mut self.action_grey;
+        let mut end_text = &mut self.end_grey;
+        if self.moves > 0   { move_text = &mut self.move_text; }
+        if self.actions > 0 { action_text = &mut self.action_text; }
+        if !self.end_flag   { end_text = &mut self.end_text; }
+        // Draw label text items, should always render on top to show the state the game is in
+        draw_ex_with_center(window, move_text, Vector::new(window_center.x - 303.0, window_center.y + 175.0), Transform::IDENTITY, 8.11)?;
+        draw_ex_with_center(window, action_text, Vector::new(window_center.x - 303.0, window_center.y + 205.0), Transform::IDENTITY, 8.12)?;
+        draw_ex_with_center(window, end_text, Vector::new(window_center.x - 303.0, window_center.y + 235.0), Transform::IDENTITY, 8.13)?;
 
-        draw_ex_with_center(window, &mut self.text, Vector::new(window_center.x, window_center.y + 286.0),
-        Transform::IDENTITY, 8.4)?;
+        // Draw Actions
+        let mut action_1;
+        let mut action_2;
+        let mut action_3;
+        //Decide which actions can be taken
+        match self.player_ref[self.curr_player].get_class()? {
+            ClassType::Support  => {
+                action_1 = &mut self.bio_grey;
+                action_2 = &mut self.shield_grey;
+                action_3 = &mut self.renew_grey;
+                if self.actions > 0 {
+                    if self.player_ref[self.curr_player].can_act(1, &self.game_board, &self.player_ref)? { action_1 = &mut self.bio_white;}
+                    if self.player_ref[self.curr_player].can_act(2, &self.game_board, &self.player_ref)? { action_2 = &mut self.shield_white; }
+                    if self.player_ref[self.curr_player].can_act(3, &self.game_board, &self.player_ref)? { action_3 = &mut self.renew_white; }
+                }
+            },
+            ClassType::Assault  => {
+                action_1 = &mut self.pierce_grey;
+                action_2 = &mut self.grenade_grey;
+                action_3 = &mut self.airraid_grey;
+                if self.actions > 0 {
+                    if self.player_ref[self.curr_player].can_act(1, &self.game_board, &self.player_ref)? { action_1 = &mut self.pierce_white;}
+                    if self.player_ref[self.curr_player].can_act(2, &self.game_board, &self.player_ref)? { action_2 = &mut self.grenade_white; }
+                    if self.player_ref[self.curr_player].can_act(3, &self.game_board, &self.player_ref)? { action_3 = &mut self.airraid_white; }
+                }
+            },
+            ClassType::Trapper  => {
+                action_1 = &mut self.caltrop_grey;
+                action_2 = &mut self.spear_grey;
+                action_3 = &mut self.cage_grey;
+                if self.actions > 0 {
+                    if self.player_ref[self.curr_player].can_act(1, &self.game_board, &self.player_ref)? { action_1 = &mut self.caltrop_white;}
+                    if self.player_ref[self.curr_player].can_act(2, &self.game_board, &self.player_ref)? { action_2 = &mut self.spear_white; }
+                    if self.player_ref[self.curr_player].can_act(3, &self.game_board, &self.player_ref)? { action_3 = &mut self.cage_white; }
+                }
+            },
+            ClassType::Wraith   => {
+                action_1 = &mut self.drain_grey;
+                action_2 = &mut self.decoy_grey;
+                action_3 = &mut self.rend_grey;
+                if self.actions > 0 {
+                    if self.player_ref[self.curr_player].can_act(1, &self.game_board, &self.player_ref)? { action_1 = &mut self.drain_white;}
+                    if self.player_ref[self.curr_player].can_act(2, &self.game_board, &self.player_ref)? { action_2 = &mut self.decoy_white; }
+                    if self.player_ref[self.curr_player].can_act(3, &self.game_board, &self.player_ref)? { action_3 = &mut self.rend_white; }
+                }
+            },
+            _c                   => { panic!("Attempted to render unsupported class abilities, {:?}", _c) }
+        };
+        draw_ex_with_center(window, action_1, Vector::new(window_center.x + 303.0, window_center.y + 175.0), Transform::IDENTITY, 8.14)?;
+        draw_ex_with_center(window, action_2, Vector::new(window_center.x + 303.0, window_center.y + 205.0), Transform::IDENTITY, 8.15)?;
+        draw_ex_with_center(window, action_3, Vector::new(window_center.x + 303.0, window_center.y + 235.0), Transform::IDENTITY, 8.16)?;
+
+        if self.action_state == ActionType::Action {
+            // Draw State Indicator
+            let y_offset = match self.curr_selection {
+                0 => { 186.0 },
+                1 => { 216.0 },
+                2 => { 246.0 },
+                _ => { panic!("Invalid underline index found for Action selection.") }
+            };
+            draw_ex_with_center(window, &mut self.underline, Vector::new(window_center.x + 301.0, window_center.y + y_offset),
+                                Transform::IDENTITY, 8.05)?;
+        }
+
+        //Draw appropriate general help text
+        let help = match self.action_state{
+            ActionType::Move => {&mut self.move_help},
+            ActionType::Action => {&mut self.action_help},
+            ActionType::End => {&mut self.end_help}
+        };
+        draw_ex_with_center(window, help, Vector::new(window_center.x, window_center.y + 286.0),
+                                             Transform::IDENTITY, 8.4)?;
+        
 
         Ok(())
     }
@@ -390,6 +563,61 @@ impl ElderGame {
         Ok(())
     }
 
+    /// Selects the next ability index between 0-2 to represent the first, second, and third options
+    pub fn next_selection(&mut self) -> Result<()> {
+        self.curr_selection = self.selections.next().expect("Cannot find next ability selection index.");
+        Ok(())
+    }
+
+    /// Selects the previous ability index between 0-2 to represent the first, second, and third options
+    pub fn prev_selection(&mut self) -> Result<()> {
+        //Iterating twice through a 3 element cycle is equal to going backwards once
+        self.next_selection()?;
+        self.next_selection()?;
+        Ok(())
+    }
+
+    ///Resets the game
+    pub fn reset(&mut self) -> Result<()> {
+        //Create players
+        let wraith = Entity::new_char(ClassType::Wraith, PlayerType::Player1, 1,
+                                      Vector::new(9,11), false)
+            .expect("Cannot create Wraith game::new.");
+        let support = Entity::new_char(ClassType::Support, PlayerType::Player2, 1,
+                                       Vector::new(6,4), false)
+            .expect("Cannot create Support game::new.");
+        let assault = Entity::new_char(ClassType::Assault, PlayerType::Player2, 1,
+                                       Vector::new(9,3), false)
+            .expect("Cannot create Assault game::new.");
+        let trapper = Entity::new_char(ClassType::Trapper, PlayerType::Player2, 1,
+                                       Vector::new(12,4), false)
+            .expect("Cannot create Trapper game::new.");
+
+        //Player Vector
+        let player_ref = vec![wraith, support, assault, trapper];
+        //There must be no number greater than `player_ref.len()-1`
+        let mut turn_order = vec![1,0,2,0,3].into_iter().cycle();
+        let curr_player = turn_order.next().expect("Cannot find first player");
+        //Find first player's stats
+        let moves = *player_ref[curr_player].get_stats()?.get_speed() as u32;
+        let actions = *player_ref[curr_player].get_stats()?.get_actions() as u32;
+
+        //Setup ability selection
+        let mut selections = vec![0,1,2].into_iter().cycle();
+        let curr_selection = selections.next().expect("Cannot find first selection");
+
+        self.player_ref = player_ref;
+        self.turn_order = turn_order;
+        self.curr_player = curr_player;
+        self.moves = moves;
+        self.actions = actions;
+        self.game_board = GameBoard::new()?;
+        self.selections = selections;
+        self.curr_selection = curr_selection;
+
+        Ok(())
+    }
+
     ///Tries to move a player, returns true if moved, false otherwise
     pub fn try_move(&mut self, new_loc: Vector) -> Result<bool> {
         let mut retval= false;
@@ -401,5 +629,9 @@ impl ElderGame {
 
         Ok(retval)
     }
+
+}
+
+impl ElderGame {
 
 }

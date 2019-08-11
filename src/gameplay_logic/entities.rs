@@ -29,13 +29,13 @@ impl ClassType {
     ///Map enum to an index string if possible
     pub fn key(&self) -> &str {
          match self {
-            ClassType::Support => {"Support"},
-            ClassType::Assault => {"Assault"},
-            ClassType::Trapper => {"Trapper"},
-            ClassType::Wraith => {"Wraith"},
-            ClassType::Kraken => {"Kraken"},
-            ClassType::Elder => {"Elder"},
-            ClassType::NPC => {"-"} //This maps to a blank TerrainStatus
+             ClassType::Support => {"Support"},
+             ClassType::Assault => {"Assault"},
+             ClassType::Trapper => {"Trapper"},
+             ClassType::Wraith => {"Wraith"},
+             ClassType::Kraken => {"Kraken"},
+             ClassType::Elder => {"Elder"},
+             ClassType::NPC => {"-"} //This maps to a blank TerrainStatus
         }
     }
 }
@@ -45,7 +45,6 @@ impl ClassType {
 #[derive(Debug, Clone, Copy)]
 pub struct Attributes {
     hp: f32,
-    curr_hp: f32,
     speed: f32,
     armor: f32,
     power: f32,
@@ -56,11 +55,10 @@ pub struct Attributes {
 #[allow(unused)]
 impl Attributes {
     /// Initialize universal stats
-    pub fn new() -> Self { Self{hp: 1.0, curr_hp: 1.0, speed: 0.0, armor: 1.0, power: 1.0, actions: 0.0, exp: 0.0} }
+    pub fn new() -> Self { Self{hp: 1.0, speed: 0.0, armor: 1.0, power: 1.0, actions: 0.0, exp: 0.0} }
     /// Sets stats for a class
     pub fn set_class(&mut self, class: &ClassType) -> Result<Self> {
         let hp: f32;
-        let curr_hp: f32;
         let speed: f32;
         let armor: f32;
         let power: f32;
@@ -96,19 +94,19 @@ impl Attributes {
                         actions = 1.0;
                     },
                     ClassType::Kraken => {
-                        hp = 250.0;
-                        speed = 3.0;
-                        armor = 4.0;
+                        hp = 200.0;
+                        speed = 4.0;
+                        armor = 3.0;
                         power = 4.0;
                         actions = 1.0;
                     },
                     ClassType::Elder => {
                         hp = 500.0;
-                        speed = 3.0;
-                        armor = 2.0;
-                        power = 2.0;
+                        speed = 4.0;
+                        armor = 5.0;
+                        power = 6.0;
                         actions = 2.0;
-                    }
+                    },
                     ClassType::NPC => {
                         hp = 1.0;
                         speed = 1.0;
@@ -117,15 +115,14 @@ impl Attributes {
                         actions = 1.0;
                     }
         }
-        curr_hp = hp;
 
-        Ok(Self{hp, curr_hp, speed, armor, power, actions, exp: 0.0})
+        Ok(Self{hp, speed, armor, power, actions, exp: 0.0})
     }
-    pub fn set_custom_stats(&mut self, hp: f32, curr_hp: f32, speed: f32, armor: f32, power: f32, actions: f32, exp: f32) -> Result<Self> {
-        Ok(Self{hp, curr_hp, speed, armor, power, actions, exp})
+    /// Makes a new set of custom stats
+    pub fn new_custom_stats(hp: f32, speed: f32, armor: f32, power: f32, actions: f32, exp: f32) -> Result<Self> {
+        Ok(Self{hp, speed, armor, power, actions, exp})
     }
     pub fn get_hp(&self)      -> &f32 { &self.hp }
-    pub fn get_curr_hp(&self) -> &f32 { &self.curr_hp }
     pub fn get_speed(&self)   -> &f32 { &self.speed }
     pub fn get_armor(&self)   -> &f32 { &self.armor }
     pub fn get_power(&self)   -> &f32 { &self.power }
@@ -133,7 +130,6 @@ impl Attributes {
     pub fn get_exp(&self)     -> &f32 { &self.exp }
     //Set
     pub fn set_hp(&mut self, hp: f32)            { self.hp = hp }
-    pub fn set_curr_hp(&mut self, curr_hp: f32)  { self.curr_hp = curr_hp }
     pub fn set_speed(&mut self, speed: f32)      { self.speed = speed }
     pub fn set_armor(&mut self, armor: f32)      { self.armor = armor }
     pub fn set_power(&mut self, power: f32)      { self.power = power }
@@ -148,6 +144,8 @@ pub struct Entity {
     player: PlayerType,
     class: ClassType,
     stats: Attributes,
+    curr_stats: Attributes,
+    level: u32,
     pos: Vector,
     invincible: bool,
     tangible: bool, //Will this Entity be pass-through?
@@ -155,25 +153,14 @@ pub struct Entity {
 
 #[allow(unused)]
 impl Entity{
-    /// Makes class-less character
-    pub fn new_npc(player: PlayerType, hp: f32, curr_hp: f32, speed: f32, armor: f32, power: f32, actions: f32, exp: f32, pos: Vector, invincible: bool, tangible: bool) -> Result<Self> {
-        Ok(Self{
-            player,
-            class: ClassType::NPC,
-            stats: Attributes::new().set_custom_stats(hp, curr_hp, speed, armor, power, actions, exp).expect("Cannot create npc with given stats"),
-            pos,
-            invincible,
-            tangible,
-        })
-    }
-    /// Sets a new character
-    pub fn new_char(class: ClassType, player: PlayerType, pos: Vector, invincible: bool) -> Result<Self>{
+    /// Makes a new character of ClassType
+    pub fn new_char(class: ClassType, player: PlayerType, level: u32, pos: Vector, invincible: bool) -> Result<Self>{
         Ok(Self{
             player,
             class,
             stats: Attributes::new().set_class(&class).expect("Cannot set class stats"),
-            pos,
-            invincible,
+            curr_stats: Attributes::new().set_class(&class).expect("Cannot set class stats"),
+            level, pos, invincible,
             tangible: true,
         })
     }
@@ -182,10 +169,16 @@ impl Entity{
     pub fn get_class(&self) -> Result<&ClassType> { Ok(&self.class) }
     pub fn get_tangible(&self) -> Result<bool> { Ok(self.tangible) }
     pub fn get_pos(&self) -> Result<Vector> { Ok(self.pos) }
+    pub fn get_level(&self) -> Result<u32> { Ok(self.level) }
     pub fn get_stats(&self) -> Result<&Attributes> { Ok(&self.stats) }
+    pub fn get_curr_stats(&self) -> Result<&Attributes> { Ok(&self.curr_stats) }
     /// Sets player info
     pub fn set_pos(&mut self, new_loc: Vector) -> Result<()> {
         self.pos = new_loc;
+        Ok(())
+    }
+    pub fn set_stats(&mut self, hp: f32, speed: f32, armor: f32, power: f32, actions: f32, exp: f32) -> Result<()> {
+        self.stats = Attributes::new_custom_stats(hp, speed, armor, power, actions, exp)?;
         Ok(())
     }
 
@@ -223,14 +216,46 @@ impl Entity{
 
         Ok(movable)
     }
+
+    /// Checks to see if this entity can use action #1, 2, or 3
+    /// Accepts ability numbers 1-3 inclusively.
+    pub fn can_act(&self, action_index: u32, _board: &GameBoard, _players: &Vec<Entity>) -> Result<bool> {
+        let actable = match self.class {
+            ClassType::Support  => {
+                match action_index {
+                    1 => { if self.level >= 1 { true } else { false } },
+                    2 => { if self.level >= 2 { true } else { false } },
+                    3 => { if self.level >= 3 { true } else { false } },
+                    _ => { false }
+                }
+            },
+            ClassType::Assault  => {
+                match action_index {
+                    1 => { if self.level >= 1 { true } else { false } },
+                    2 => { if self.level >= 2 { true } else { false } },
+                    3 => { if self.level >= 3 { true } else { false } },
+                    _ => { false }
+                }
+            },
+            ClassType::Trapper  => {
+                match action_index {
+                    1 => { if self.level >= 1 { true } else { false } },
+                    2 => { if self.level >= 2 { true } else { false } },
+                    3 => { if self.level >= 3 { true } else { false } },
+                    _ => { false }
+                }
+            },
+            ClassType::Wraith   => {
+                match action_index {
+                    1 => { true },
+                    2 => { true },
+                    3 => { true },
+                    _ => { false }
+                }
+            },
+            _                   => { false }
+        };
+
+        Ok(actable)
+    }
 }
-
-
-
-/// Class abilities
-trait Wraith {}
-trait Kraken {}
-trait Elder {}
-trait Support {}
-trait Assault {}
-trait Trapper {}

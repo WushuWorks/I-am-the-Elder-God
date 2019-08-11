@@ -124,16 +124,16 @@ Wraith
  index: -1
 Kraken
  rotate: false
- xy: 0, 50
- size: 70, 70
- orig: 70, 70
+ xy: 0, 35
+ size: 30, 30
+ orig: 30, 30
  offset: 0, 0
  index: -1
 Elder
  rotate: false
- xy: 0, 140
- size: 110, 110
- orig: 110, 110
+ xy: 0, 70
+ size: 30, 30
+ orig: 30, 30
  offset: 0, 0
  index: -1
 DeadGod
