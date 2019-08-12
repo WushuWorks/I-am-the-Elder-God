@@ -273,8 +273,9 @@ impl ElderGame {
         if kb[Key::M] == Pressed && self.moves > 0   { self.action_state = ActionType::Move; }
         if kb[Key::A] == Pressed && self.actions > 0 {
             self.curr_selection = 0; //Selection should always be the first option to start
+            self.selections = vec![1,2,0].into_iter().cycle(); //Must also reset as if 0 was chosen
             self.action_state = ActionType::Action;
-            }
+        }
         if kb[Key::E] == Pressed                     { self.action_state = ActionType::End;}
 
         //Only accept commands when the player can do something
