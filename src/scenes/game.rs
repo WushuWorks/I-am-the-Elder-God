@@ -46,15 +46,19 @@ pub struct ElderGame {
     //Wraith
     drain_grey: Asset<Image>, decoy_grey: Asset<Image>, rend_grey: Asset<Image>,
     drain_white: Asset<Image>, decoy_white: Asset<Image>, rend_white: Asset<Image>,
+    drain_help: Asset<Image>, decoy_help: Asset<Image>, rend_help: Asset<Image>,
     //Support
     bio_grey: Asset<Image>, shield_grey: Asset<Image>, renew_grey: Asset<Image>,
     bio_white: Asset<Image>, shield_white: Asset<Image>, renew_white: Asset<Image>,
+    bio_help: Asset<Image>, shield_help: Asset<Image>, renew_help: Asset<Image>,
     //Assault
     pierce_grey: Asset<Image>, grenade_grey: Asset<Image>, airraid_grey: Asset<Image>,
     pierce_white: Asset<Image>, grenade_white: Asset<Image>, airraid_white: Asset<Image>,
+    pierce_help: Asset<Image>, grenade_help: Asset<Image>, airraid_help: Asset<Image>,
     //Trapper
     caltrop_grey: Asset<Image>, spear_grey: Asset<Image>, cage_grey: Asset<Image>,
     caltrop_white: Asset<Image>, spear_white: Asset<Image>, cage_white: Asset<Image>,
+    caltrop_help: Asset<Image>, spear_help: Asset<Image>, cage_help: Asset<Image>,
 
     //game_board layer
     game_board: GameBoard,
@@ -75,10 +79,13 @@ pub struct ElderGame {
     //Atlas supports keys A-Z, Blank (# is the same tile), and Null (with the '-' key)
     game_tiles: Asset<Atlas>,
     token_tiles: Asset<Atlas>,
+    soft_click: Asset<Sound>,
+    click: Asset<Sound>,
 
     winner: PlayerType,
 }
 
+//This is here to prevent silly warning about flags
 #[allow(unused_assignments)]
 impl ElderGame {
     /// Load the assets and initialise the game
@@ -89,6 +96,8 @@ impl ElderGame {
         let atlas_index = "Atlas_Tile_Index";
         let game_atlas_index = "Atlas_Game_Index";
         let underline = "line.png";
+        let click_soft = "SoftClick.wav";
+        let click_hard = "Click.wav";
 
         //Help text
         let move_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
@@ -151,6 +160,36 @@ impl ElderGame {
             font.render("Spear", &FontStyle::new(16.0, Color::WHITE), )}));
         let cage_white = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Cage", &FontStyle::new(16.0, Color::WHITE), )}));
+
+        //Action help text
+        //Support
+        let bio_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Radial healing pulse, bad for monsters", &FontStyle::new(20.0, Color::BLACK), )}));
+        let shield_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Deploy a stationary shield bubble", &FontStyle::new(20.0, Color::BLACK), )}));
+        let renew_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Radial revive, heal, and restore", &FontStyle::new(20.0, Color::BLACK), )}));
+        //Assault
+        let pierce_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Fire a shot that penetrates barriers", &FontStyle::new(20.0, Color::BLACK), )}));
+        let grenade_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Throw an incendiary grenade", &FontStyle::new(20.0, Color::BLACK), )}));
+        let airraid_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Call in a semi-targeted air raid", &FontStyle::new(20.0, Color::BLACK), )}));
+        //Trapper
+        let caltrop_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Throw caltrops that damage on-contact", &FontStyle::new(20.0, Color::BLACK), )}));
+        let spear_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Fire a move-hampering spear", &FontStyle::new(20.0, Color::BLACK), )}));
+        let cage_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Deploy a trapping forcefield on you", &FontStyle::new(20.0, Color::BLACK), )}));
+        //Wraith
+        let drain_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Siphon life from a target", &FontStyle::new(20.0, Color::BLACK), )}));
+        let decoy_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Freeze adjacent targets and flee", &FontStyle::new(20.0, Color::BLACK), )}));
+        let rend_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
+            font.render("Cripple surrounding targets", &FontStyle::new(20.0, Color::BLACK), )}));
 
         let controls_text = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("[Press]", &FontStyle::new(17.0, Color::WHITE), )}));
@@ -215,6 +254,10 @@ impl ElderGame {
         let mut selections = vec![0,1,2].into_iter().cycle();
         let curr_selection = selections.next().expect("Cannot find first selection");
 
+        //Setup Sound Asssets
+        let soft_click = Asset::new(Sound::load(click_soft));
+        let click = Asset::new(Sound::load(click_hard));
+
         Ok(Self {
             game_background: Asset::new(Image::load(background)),
             game_overlay: Asset::new(Image::load(overlay)),
@@ -231,15 +274,19 @@ impl ElderGame {
             //Wraith
             drain_grey, decoy_grey, rend_grey,
             drain_white, decoy_white, rend_white,
+            drain_help, decoy_help, rend_help,
             //Support
             bio_grey, shield_grey, renew_grey,
             bio_white, shield_white, renew_white,
+            bio_help, shield_help, renew_help,
             //Assault
             pierce_grey, grenade_grey, airraid_grey,
             pierce_white, grenade_white, airraid_white,
+            pierce_help, grenade_help, airraid_help,
             //Trapper
             caltrop_grey, spear_grey, cage_grey,
             caltrop_white, spear_white, cage_white,
+            caltrop_help, spear_help, cage_help,
 
             game_board: GameBoard::new().expect("Failed to load GameBoard in scenes::game::ElderGame::new"),
             player_ref,
@@ -254,6 +301,7 @@ impl ElderGame {
 
             game_tiles: Asset::new(Atlas::load(atlas_index)),
             token_tiles: Asset::new(Atlas::load(game_atlas_index)),
+            soft_click, click,
 
             winner: PlayerType::Undetermined,
         })
@@ -270,12 +318,19 @@ impl ElderGame {
         let mut acted = false;
 
         //Change ActionState - disallow swap if nonsensical
-        if kb[Key::M] == Pressed && self.moves > 0   { self.action_state = ActionType::Move; }
+        if kb[Key::M] == Pressed && self.moves > 0   {
+            self.click.execute(|music| { music.play() })?;
+            self.action_state = ActionType::Move;
+        }
+        else if kb[Key::M] == Pressed { self.soft_click.execute(|music| { music.play() })?; }
+
         if kb[Key::A] == Pressed && self.actions > 0 {
+            self.click.execute(|music| { music.play() })?;
             self.curr_selection = 0; //Selection should always be the first option to start
             self.selections = vec![1,2,0].into_iter().cycle(); //Must also reset as if 0 was chosen
             self.action_state = ActionType::Action;
-        }
+        } else if kb[Key::A] == Pressed { self.soft_click.execute(|music| { music.play() })?; }
+
         if kb[Key::E] == Pressed                     { self.action_state = ActionType::End;}
 
         //Only accept commands when the player can do something
@@ -286,6 +341,11 @@ impl ElderGame {
                     else if kb[Key::Left] == Pressed { moved = self.try_move(Vector::new(curr_loc.x - 1.0, curr_loc.y))?;}
                     else if kb[Key::Down] == Pressed { moved = self.try_move(Vector::new(curr_loc.x, curr_loc.y + 1.0))?;}
                     else if kb[Key::Right] == Pressed { moved = self.try_move(Vector::new(curr_loc.x + 1.0, curr_loc.y))?;}
+                } else {
+                    if kb[Key::Up] == Pressed { self.soft_click.execute(|music| { music.play() })?; }
+                    else if kb[Key::Left] == Pressed { self.soft_click.execute(|music| { music.play() })?; }
+                    else if kb[Key::Down] == Pressed { self.soft_click.execute(|music| { music.play() })?; }
+                    else if kb[Key::Right] == Pressed { self.soft_click.execute(|music| { music.play() })?; }
                 }
             },
             ActionType::Action => {
@@ -295,13 +355,11 @@ impl ElderGame {
 
                     if kb[Key::Return] == Pressed {
                         if self.player_ref[self.curr_player].can_act(self.curr_selection + 1, &self.game_board, &self.player_ref)? {
+                            self.click.execute(|music| { music.play() })?;
                             println!("Used {:?}'s {:?} ability.", self.player_ref[self.curr_player].get_class()?,
                                      self.player_ref[self.curr_player].act(self.curr_selection + 1, &self.game_board, &self.player_ref)?);
                             self.actions -= 1;
-                        } else {
-                            println!("Cannot use {:?}'s {:?} ability.", self.player_ref[self.curr_player].get_class()?,
-                                     self.player_ref[self.curr_player].act(self.curr_selection + 1, &self.game_board, &self.player_ref)?);
-                        }
+                        } else { self.soft_click.execute(|music| { music.play() })?; }
                     }
                 } else { //Being in the action state with no actions is nonsensical and forbidden
                     self.action_state = ActionType::Move;
@@ -518,6 +576,7 @@ impl ElderGame {
         draw_ex_with_center(window, action_2, Vector::new(window_center.x + 303.0, window_center.y + 205.0), Transform::IDENTITY, 8.15)?;
         draw_ex_with_center(window, action_3, Vector::new(window_center.x + 303.0, window_center.y + 235.0), Transform::IDENTITY, 8.16)?;
 
+        //Draw an underline under selected option
         if self.action_state == ActionType::Action {
             // Draw State Indicator
             let y_offset = match self.curr_selection {
@@ -538,7 +597,49 @@ impl ElderGame {
         };
         draw_ex_with_center(window, help, Vector::new(window_center.x, window_center.y + 286.0),
                                              Transform::IDENTITY, 8.4)?;
-        
+
+        //Draw action help text
+        if self.action_state == ActionType::Action {
+            //Decide which help text to render
+            let action_help = match self.player_ref[self.curr_player].get_class()? {
+                ClassType::Support  => {
+                    match self.curr_selection {
+                        0 => &mut self.bio_help,
+                        1 => &mut self.shield_help,
+                        2 => &mut self.renew_help,
+                        _ => panic!("Tried to draw invalid ability.")
+                    }
+                },
+                ClassType::Assault  => {
+                    match self.curr_selection {
+                        0 => &mut self.pierce_help,
+                        1 => &mut self.grenade_help,
+                        2 => &mut self.airraid_help,
+                        _ => panic!("Tried to draw invalid ability.")
+                    }
+                },
+                ClassType::Trapper  => {
+                    match self.curr_selection {
+                        0 => &mut self.caltrop_help,
+                        1 => &mut self.spear_help,
+                        2 => &mut self.cage_help,
+                        _ => panic!("Tried to draw invalid ability.")
+                    }
+                },
+                ClassType::Wraith   => {
+                    match self.curr_selection {
+                        0 => &mut self.drain_help,
+                        1 => &mut self.decoy_help,
+                        2 => &mut self.rend_help,
+                        _ => panic!("Tried to draw invalid ability.")
+                    }
+                },
+                _c                   => { panic!("Attempted to render unsupported class abilities, {:?}", _c) }
+            };
+            draw_ex_with_center(window, action_help, Vector::new(window_center.x, window_center.y - 286.0),
+                                Transform::IDENTITY, 8.41)?;
+        }
+
 
         Ok(())
     }
