@@ -306,7 +306,7 @@ impl ElderGame {
 
             game_tiles: Asset::new(Atlas::load(atlas_index)),
             token_tiles: Asset::new(Atlas::load(game_atlas_index)),
-            selectable_animator: Animator::new(animation_keys, 0.5)?,
+            selectable_animator: Animator::new(animation_keys, 0.17)?,
 
             soft_click, click,
 
