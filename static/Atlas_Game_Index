@@ -232,3 +232,44 @@ TallThin
  orig: 120, 500
  offset: 0, 0
  index: -1
+
+PHSelectableSpriteSheet.png
+size: 170, 30
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+S1
+ rotate: false
+ xy: 0, 0
+ size: 30, 30
+ orig: 30, 30
+ offset: 0, 0
+ index: -1
+S2
+ rotate: false
+ xy: 35, 0
+ size: 30, 30
+ orig: 30, 30
+ offset: 0, 0
+ index: -1
+S3
+ rotate: false
+ xy: 70, 0
+ size: 30, 30
+ orig: 30, 30
+ offset: 0, 0
+ index: -1
+S4
+ rotate: false
+ xy: 105, 0
+ size: 30, 30
+ orig: 30, 30
+ offset: 0, 0
+ index: -1
+S5
+ rotate: false
+ xy: 140, 0
+ size: 30, 30
+ orig: 30, 30
+ offset: 0, 0
+ index: -1

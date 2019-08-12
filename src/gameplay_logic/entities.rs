@@ -299,4 +299,43 @@ impl Entity{
 
         Ok(actable)
     }
+
+    /// Returns true if the passed location is attackable, false otherwise
+    pub fn can_attack(&self, location: Vector, board: &GameBoard, players: &Vec<Entity>) -> bool {
+        let mut attackable = true; //assume truth and attempt to disprove
+        let cell = board.get_board().unwrap()[location.y as usize][location.x as usize];
+        let land = *cell.get_land().unwrap();
+        let cond = *cell.get_cond().unwrap();
+
+        // Offboard spaces should always be unselectable
+        if land == Terrain::Empty {
+            attackable = false;
+        }
+
+        attackable
+    }
+
+    /// Returns a list of coordinates adjacent to the player
+    pub fn adjacent(&self, board: &GameBoard, players: &Vec<Entity>) -> Vec<Vector> {
+        let mut adjacent = vec![];
+        let up = Vector::new(self.pos.x - 1.0, self.pos.y);
+        let down = Vector::new(self.pos.x + 1.0, self.pos.y);
+        let left = Vector::new(self.pos.x, self.pos.y - 1.0);
+        let right = Vector::new(self.pos.x, self.pos.y + 1.0);
+
+        if self.can_attack( up, board, players) {
+            adjacent.push(up);
+        }
+        if self.can_attack( down, board, players) {
+            adjacent.push(down);
+        }
+        if self.can_attack( left, board, players) {
+            adjacent.push(left);
+        }
+        if self.can_attack( right, board, players) {
+            adjacent.push(right);
+        }
+
+        adjacent
+    }
 }

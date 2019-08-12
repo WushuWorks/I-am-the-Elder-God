@@ -1,11 +1,12 @@
 use crate::game_logic::scene_type::SceneReturn;
 use crate::gameplay_logic::entities::*;
+use crate::gameplay_logic::animator::Animator;
 use crate::gameplay_logic::game_board::GameBoard;
 use crate::game_logic::draw_helper::*;
 
 //Resources
 use quicksilver::prelude::*;
-use quicksilver::graphics::Atlas;
+use quicksilver::graphics::{Atlas};
 //Std
 use std::iter::Cycle;
 use std::vec::IntoIter;
@@ -79,6 +80,7 @@ pub struct ElderGame {
     //Atlas supports keys A-Z, Blank (# is the same tile), and Null (with the '-' key)
     game_tiles: Asset<Atlas>,
     token_tiles: Asset<Atlas>,
+    selectable_animator: Animator,
     soft_click: Asset<Sound>,
     click: Asset<Sound>,
 
@@ -166,7 +168,7 @@ impl ElderGame {
         let bio_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Radial healing pulse, bad for monsters", &FontStyle::new(20.0, Color::BLACK), )}));
         let shield_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Deploy a stationary shield bubble", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Deploy a stationary shield bubble on allies", &FontStyle::new(20.0, Color::BLACK), )}));
         let renew_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Radial revive, heal, and restore", &FontStyle::new(20.0, Color::BLACK), )}));
         //Assault
@@ -258,6 +260,9 @@ impl ElderGame {
         let soft_click = Asset::new(Sound::load(click_soft));
         let click = Asset::new(Sound::load(click_hard));
 
+        //Setup psuedo animation
+        let animation_keys = vec!["S1".to_string(),"S2".to_string(),"S3".to_string(),"S4".to_string(),"S5".to_string()].into_iter().cycle();
+
         Ok(Self {
             game_background: Asset::new(Image::load(background)),
             game_overlay: Asset::new(Image::load(overlay)),
@@ -301,6 +306,8 @@ impl ElderGame {
 
             game_tiles: Asset::new(Atlas::load(atlas_index)),
             token_tiles: Asset::new(Atlas::load(game_atlas_index)),
+            selectable_animator: Animator::new(animation_keys, 0.5)?,
+
             soft_click, click,
 
             winner: PlayerType::Undetermined,
@@ -402,6 +409,8 @@ impl ElderGame {
     /// Draw stuff on the screen
     pub fn draw(&mut self, window: &mut Window) -> Result<()> {
         let window_center = Vector::new(window.screen_size().x as i32 / 2, window.screen_size().y as i32 / 2);
+        //This must be called to ensure that 'anim_key' is always the correct key of the animation to draw
+        let anim_key = self.selectable_animator.next_if_not(window.current_fps())?.as_str();
 
         // Draw the frame and overlay
         draw_ex_with_center(window, &mut self.game_background, window_center, Transform::IDENTITY, 1.0)?;
@@ -640,6 +649,52 @@ impl ElderGame {
                                 Transform::IDENTITY, 8.41)?;
         }
 
+        //Draw selectable animation
+        if self.action_state == ActionType::Action {
+            //Decide which help text to render
+            let selectable_coordinates = match self.player_ref[self.curr_player].get_class()? {
+                ClassType::Support  => {
+                    match self.curr_selection {
+                        0 => vec![],
+                        1 => vec![],
+                        2 => vec![],
+                        _ => panic!("Tried to draw invalid ability.")
+                    }
+                },
+                ClassType::Assault  => {
+                    match self.curr_selection {
+                        0 => vec![],
+                        1 => vec![],
+                        2 => vec![],
+                        _ => panic!("Tried to draw invalid ability.")
+                    }
+                },
+                ClassType::Trapper  => {
+                    match self.curr_selection {
+                        0 => vec![],
+                        1 => vec![],
+                        2 => vec![],
+                        _ => panic!("Tried to draw invalid ability.")
+                    }
+                },
+                ClassType::Wraith   => {
+                    match self.curr_selection {
+                        0 => vec![],
+                        1 => vec![],
+                        2 => self.player_ref[self.curr_player].adjacent(&self.game_board, &self.player_ref),
+                        _ => panic!("Tried to draw invalid ability.")
+                    }
+                },
+                _c                   => { panic!("Attempted to render unsupported action highlight, {:?}", _c) }
+            };
+            //Draw on tiles that are affected by an ability
+            for coordinate in selectable_coordinates {
+                draw_ex_atlas_with_center(window, &mut self.token_tiles,
+                                          Vector::new(window_center.x - 380.0 + (40.0 * coordinate.x) + 23.0,
+                                                      window_center.y - 300.0 + (40.0 * coordinate.y) + 18.0), Transform::IDENTITY, 8.5, anim_key)?;
+            }
+
+        }
 
         Ok(())
     }

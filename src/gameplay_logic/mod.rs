@@ -11,3 +11,4 @@ pub mod game_board;
 pub mod gameplay_type;
 pub mod game_levels;
 pub mod entities;
+pub mod animator;
