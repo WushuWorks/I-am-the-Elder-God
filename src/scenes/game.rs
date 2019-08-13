@@ -18,6 +18,14 @@ enum ActionType {
     End,
 }
 
+#[derive(PartialEq, Clone, Copy)]
+pub enum Direction {
+    Up,
+    Right,
+    Left,
+    Down,
+}
+
 pub struct ElderGame {
     game_background: Asset<Image>,
     game_overlay: Asset<Image>,
@@ -74,11 +82,11 @@ pub struct ElderGame {
     action_state: ActionType,
     moves: u32,
     actions: u32,
+    curr_dir: Direction,
+    directions: Cycle<IntoIter<Direction>>,
+
     selections: Cycle<IntoIter<u32>>,
     curr_selection: u32,
-
-    //Action information - [Range, ]
-
 
     //Atlas supports keys A-Z, Blank (# is the same tile), and Null (with the '-' key)
     game_tiles: Asset<Atlas>,
@@ -106,11 +114,11 @@ impl ElderGame {
 
         //Help text
         let move_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Move-Arrow Keys, 0/1/2-end", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Arrow Keys to move, 0/1/2-end game", &FontStyle::new(20.0, Color::BLACK), )}));
         let action_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Action-Arrows+Enter, 0/1/2-end", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Up/Down-Scroll Left/Right-Aim + Enter", &FontStyle::new(20.0, Color::BLACK), )}));
         let end_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Ending turn... 0/1/2-end", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Ending turn... 0/1/2-end game", &FontStyle::new(20.0, Color::BLACK), )}));
 
         //Ability Labels
         //Wraith
@@ -171,7 +179,7 @@ impl ElderGame {
         let bio_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Radial healing pulse, bad for monsters", &FontStyle::new(20.0, Color::BLACK), )}));
         let shield_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Deploy a stationary shield bubble on allies", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Stationary shield bubble on allies", &FontStyle::new(20.0, Color::BLACK), )}));
         let renew_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Radial revive, heal, and restore", &FontStyle::new(20.0, Color::BLACK), )}));
         //Assault
@@ -180,12 +188,12 @@ impl ElderGame {
         let grenade_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Throw an incendiary grenade", &FontStyle::new(20.0, Color::BLACK), )}));
         let airraid_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Call in a semi-targeted air raid", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Air strike that hits randomly in area", &FontStyle::new(20.0, Color::BLACK), )}));
         //Trapper
         let caltrop_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Throw caltrops that damage on-contact", &FontStyle::new(20.0, Color::BLACK), )}));
         let spear_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Fire a move-hampering spear", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Fire a long range grappling spear", &FontStyle::new(20.0, Color::BLACK), )}));
         let cage_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Deploy a trapping forcefield on you", &FontStyle::new(20.0, Color::BLACK), )}));
         //Wraith
@@ -266,6 +274,9 @@ impl ElderGame {
         //Setup psuedo animation
         let animation_keys = vec!["S1".to_string(),"S2".to_string(),"S3".to_string(),"S4".to_string(),"S5".to_string()].into_iter().cycle();
 
+        //Setup direction tracker
+        let mut directions = vec![Direction::Up, Direction::Right, Direction::Down, Direction::Left].into_iter().cycle();
+
         Ok(Self {
             game_background: Asset::new(Image::load(background)),
             game_overlay: Asset::new(Image::load(overlay)),
@@ -304,6 +315,8 @@ impl ElderGame {
             //Turn control data
             end_flag: false,
             action_state: ActionType::Move,
+            curr_dir: directions.next().expect("Cannot load initial direction in scenes::game::ElderGame::new"),
+            directions: directions,
             moves, actions,
             selections, curr_selection,
 
@@ -338,6 +351,8 @@ impl ElderGame {
             self.click.execute(|music| { music.play() })?;
             self.curr_selection = 0; //Selection should always be the first option to start
             self.selections = vec![1,2,0].into_iter().cycle(); //Must also reset as if 0 was chosen
+            self.curr_dir = Direction::Up; //Dir should always start at up
+            self.directions = vec![Direction::Right, Direction::Down, Direction::Left, Direction::Up].into_iter().cycle(); //Must also reset as if up was chosen
             self.action_state = ActionType::Action;
         } else if kb[Key::A] == Pressed { self.soft_click.execute(|music| { music.play() })?; }
 
@@ -362,6 +377,9 @@ impl ElderGame {
                 if self.actions > 0 {
                     if kb[Key::Up] == Pressed { self.prev_selection()?; }
                     else if kb[Key::Down] == Pressed { self.next_selection()?;}
+
+                    if kb[Key::Left] == Pressed { self.prev_direction()?; } //Direction changing
+                    else if kb[Key::Right] == Pressed { self.next_direction()?;}
 
                     if kb[Key::Return] == Pressed {
                         if self.player_ref[self.curr_player].can_act(self.curr_selection + 1, &self.game_board, &self.player_ref)? {
@@ -654,29 +672,29 @@ impl ElderGame {
 
         //Draw selectable animation
         if self.action_state == ActionType::Action {
-            //Decide which help text to render
+            //Decide which tiles to put the animation on
             let selectable_coordinates = match self.player_ref[self.curr_player].get_class()? {
                 ClassType::Support  => {
                     match self.curr_selection {
                         0 => self.player_ref[self.curr_player].adjacent_range(3, &self.game_board, &self.player_ref)?,
-                        1 => vec![],
-                        2 => vec![],
+                        1 => self.player_ref[self.curr_player].list_range_ally(&self.game_board, &self.player_ref)?,
+                        2 => self.player_ref[self.curr_player].adjacent_range(2, &self.game_board, &self.player_ref)?,
                         _ => panic!("Tried to draw invalid ability.")
                     }
                 },
                 ClassType::Assault  => {
                     match self.curr_selection {
-                        0 => vec![],
-                        1 => vec![],
-                        2 => vec![],
+                        0 => self.player_ref[self.curr_player].directed_line_range(3, self.curr_dir, &self.game_board, &self.player_ref)?,
+                        1 => self.player_ref[self.curr_player].directed_line_radial_cast(3, 1, self.curr_dir, &self.game_board, &self.player_ref)?,
+                        2 => self.player_ref[self.curr_player].directed_line_radial(3, 3, self.curr_dir, &self.game_board, &self.player_ref)?,
                         _ => panic!("Tried to draw invalid ability.")
                     }
                 },
                 ClassType::Trapper  => {
                     match self.curr_selection {
-                        0 => vec![],
-                        1 => vec![],
-                        2 => vec![],
+                        0 => self.player_ref[self.curr_player].directed_line_radial(1, 1, self.curr_dir, &self.game_board, &self.player_ref)?,
+                        1 => self.player_ref[self.curr_player].directed_line_cast(6, self.curr_dir, &self.game_board, &self.player_ref)?,
+                        2 => self.player_ref[self.curr_player].adjacent_shell(3,  &self.game_board, &self.player_ref)?,
                         _ => panic!("Tried to draw invalid ability.")
                     }
                 },
@@ -739,6 +757,21 @@ impl ElderGame {
         Ok(())
     }
 
+    /// Selects the next direction and sets the current direction
+    pub fn next_direction(&mut self) -> Result<()> {
+        self.curr_dir = self.directions.next().expect("Cannot find next direction.");
+        Ok(())
+    }
+
+    /// Selects the previous direction and sets the current direction
+    pub fn prev_direction(&mut self) -> Result<()> {
+        //Iterating thrice through a 4 element cycle is equal to going backwards once
+        self.next_direction()?;
+        self.next_direction()?;
+        self.next_direction()?;
+        Ok(())
+    }
+
     ///Resets the game
     pub fn reset(&mut self) -> Result<()> {
         //Create players
@@ -791,9 +824,5 @@ impl ElderGame {
 
         Ok(retval)
     }
-
-}
-
-impl ElderGame {
 
 }

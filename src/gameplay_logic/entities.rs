@@ -3,6 +3,7 @@ Here we write the character classes that inhabit the field
 */
 use crate::gameplay_logic::game_board::GameBoard;
 use crate::gameplay_logic::gameplay_type::*;
+use crate::scenes::game::Direction;
 
 use quicksilver::prelude::*;
 
@@ -315,28 +316,24 @@ impl Entity{
         attackable
     }
 
-    /// Returns a list of attackable coordinates adjacent to the player
-    pub fn adjacent(&self, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
-        let mut adjacent = vec![];
-        let up = Vector::new(self.pos.x - 1.0, self.pos.y);
-        let down = Vector::new(self.pos.x + 1.0, self.pos.y);
-        let left = Vector::new(self.pos.x, self.pos.y - 1.0);
-        let right = Vector::new(self.pos.x, self.pos.y + 1.0);
+    /// Returns a list of attackable coordinates of all characters controlled by a player
+    pub fn list_range_ally(&self, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
 
-        if self.can_attack( up, board, players) {
-            adjacent.push(up);
-        }
-        if self.can_attack( down, board, players) {
-            adjacent.push(down);
-        }
-        if self.can_attack( left, board, players) {
-            adjacent.push(left);
-        }
-        if self.can_attack( right, board, players) {
-            adjacent.push(right);
+        for player in players { // For all players
+            for row in board.get_board()? {
+                for cell in row { //The cell is on the board
+                    if self.can_attack(cell.get_pos()?, board, players) { //The cell can be attacked
+                        if player.get_player()? == self.get_player()? && cell.get_pos()? == player.get_pos()? { //The player is an ally and is on the cell being examined
+                            targetable.push(cell.get_pos()?);
+                        }
+                    }
+                }
+            }
         }
 
-        Ok(adjacent)
+        Ok(targetable)
     }
 
     /// Returns a list of attackable coordinates adjacent to the player up to the range specified
@@ -355,6 +352,280 @@ impl Entity{
                     }
                 }
             }
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates at the specified range around the player
+    pub fn adjacent_shell(&self, range: u32, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        for row in board.get_board()? {
+            for cell in row {
+                let distance = cell.get_pos()? - player_pos;
+                if distance.x.abs() + distance.y.abs() == range as f32 { //The cell is in range of the player
+                    if self.can_attack(cell.get_pos()?, board, players) { //The cell can be attacked
+                        targetable.push(cell.get_pos()?);
+                    }
+                }
+            }
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates from the passed coordinate outwards
+    pub fn radial_range(&self, location: Vector, radius: u32, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = location;
+
+        for row in board.get_board()? {
+            for cell in row {
+                let distance = cell.get_pos()? - player_pos;
+                if distance.x.abs() + distance.y.abs() <= radius as f32 { //The cell is in range of the player
+                    if self.can_attack(cell.get_pos()?, board, players) { //The cell can be attacked
+                        targetable.push(cell.get_pos()?);
+                    }
+                }
+            }
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates in the direction passed up to the range given
+    pub fn directed_line_range(&self, range: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        //Cannot look off board
+        //We add 1 to `range` to make the call draw the correct range since we skip one element
+        match direction {
+            Direction::Up => {
+                if player_pos.y != 0.0 { //Top edge
+                    for elem in 1..range+1 {
+                        if player_pos.y - elem as f32 <= 0.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x, player_pos.y - elem as f32), board, players) {
+                            targetable.push(Vector::new(player_pos.x, player_pos.y - elem as f32));
+                        }
+                    }
+                }
+            },
+            Direction::Down => {
+                if player_pos.y != board.get_board()?.len() as f32 - 1.0 { //Bottom edge
+                    for elem in 1..range+1 {
+                        if player_pos.y + elem as f32 >= board.get_board()?.len() as f32 - 1.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x, player_pos.y + elem as f32), board, players) {
+                            targetable.push(Vector::new(player_pos.x, player_pos.y + elem as f32));
+                        }
+                    }
+                }
+            },
+            Direction::Left => {
+                if player_pos.x != 0.0 { //Left Edge
+                    for elem in 1..range+1 {
+                        if player_pos.x - elem as f32 <= 0.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x - elem as f32, player_pos.y), board, players) {
+                            targetable.push(Vector::new(player_pos.x - elem as f32, player_pos.y));
+                        }
+                    }
+                }
+            },
+            Direction::Right => {
+                if player_pos.x != board.get_board()?.first().unwrap().len() as f32 - 1.0 { //Right edge
+                    for elem in 1..range+1 {
+                        if player_pos.x + elem as f32 >= board.get_board()?.first().unwrap().len() as f32 - 1.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x + elem as f32, player_pos.y), board, players) {
+                            targetable.push(Vector::new(player_pos.x + elem as f32, player_pos.y));
+                        }
+                    }
+                }
+            },
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates in the direction passed up to the range given, stopping at an un-move-into-able obstacle
+    pub fn directed_line_cast(&self, range: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        //Cannot look off board
+        //We add 1 to `range` to make the call draw the correct range since we skip one element
+        match direction {
+            Direction::Up => {
+                if player_pos.y != 0.0 { //Top edge
+                    for elem in 1..range+1 {
+                        if player_pos.y - elem as f32 <= 0.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x, player_pos.y - elem as f32), board, players) {
+                            targetable.push(Vector::new(player_pos.x, player_pos.y - elem as f32));
+                        } else {
+                            if self.can_move(Vector::new(player_pos.x, player_pos.y - elem as f32), board, players)? {
+                                targetable.push(Vector::new(player_pos.x, player_pos.y - elem as f32));
+                            }
+                            break;
+                        }
+                    }
+                }
+            },
+            Direction::Down => {
+                if player_pos.y != board.get_board()?.len() as f32 - 1.0 { //Bottom edge
+                    for elem in 1..range+1 {
+                        if player_pos.y + elem as f32 >= board.get_board()?.len() as f32 - 1.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x, player_pos.y + elem as f32), board, players) {
+                            targetable.push(Vector::new(player_pos.x, player_pos.y + elem as f32));
+                        } else {
+                            if self.can_move(Vector::new(player_pos.x, player_pos.y + elem as f32), board, players)? {
+                                targetable.push(Vector::new(player_pos.x, player_pos.y + elem as f32));
+                            }
+                            break;
+                        }
+                    }
+                }
+            },
+            Direction::Left => {
+                if player_pos.x != 0.0 { //Left Edge
+                    for elem in 1..range+1 {
+                        if player_pos.x - elem as f32 <= 0.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x - elem as f32, player_pos.y), board, players) {
+                            targetable.push(Vector::new(player_pos.x - elem as f32, player_pos.y));
+                        } else {
+                            if self.can_move(Vector::new(player_pos.x - elem as f32, player_pos.y), board, players)? {
+                                targetable.push(Vector::new(player_pos.x - elem as f32, player_pos.y));
+                            }
+                            break;
+                        }
+                    }
+                }
+            },
+            Direction::Right => {
+                if player_pos.x != board.get_board()?.first().unwrap().len() as f32 - 1.0 { //Right edge
+                    for elem in 1..range+1 {
+                        if player_pos.x + elem as f32 >= board.get_board()?.first().unwrap().len() as f32 - 1.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x + elem as f32, player_pos.y), board, players) {
+                            targetable.push(Vector::new(player_pos.x + elem as f32, player_pos.y));
+                        } else {
+                            if self.can_move(Vector::new(player_pos.x + elem as f32, player_pos.y), board, players)? {
+                                targetable.push(Vector::new(player_pos.x + elem as f32, player_pos.y));
+                            }
+                            break;
+                        }
+                    }
+                }
+            },
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates up to the direction passed at the radius given, stopping at an un-move-into-able obstacle
+    pub fn directed_line_radial_cast(&self, range: u32, radius: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        //Cannot look off board
+        //We add 1 to `range` to make the call draw the correct range since we skip one element
+        match direction {
+            Direction::Up => {
+                if player_pos.y != 0.0 { //Top edge
+                    for elem in 1..range+1 {
+                        //Obstacle encountered, go back one element
+                        if !self.can_move(Vector::new(player_pos.x, player_pos.y - elem as f32), board, players)? {
+                            targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y - elem as f32 + 1.0), radius, board, players)?;
+                            break;
+                        }
+                        //Final iteration, no obstacles
+                        if elem == range {
+                            targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y - elem as f32), radius, board, players)?;
+                            break;
+                        }
+                    }
+                }
+            },
+            Direction::Down => {
+                if player_pos.y != board.get_board()?.len() as f32 - 1.0 { //Bottom edge
+                    for elem in 1..range+1 {
+                        //Obstacle encountered, go back one element
+                        if !self.can_move(Vector::new(player_pos.x, player_pos.y + elem as f32), board, players)? {
+                            targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y + elem as f32 - 1.0), radius, board, players)?;
+                            break;
+                        }
+                        //Final iteration, no obstacles
+                        if elem == range {
+                            targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y + elem as f32), radius, board, players)?;
+                            break;
+                        }
+
+                    }
+                }
+            },
+            Direction::Left => {
+                if player_pos.x != 0.0 { //Left Edge
+                    for elem in 1..range+1 {
+                        //Obstacle encountered, go back one element
+                        if !self.can_move(Vector::new(player_pos.x - elem as f32, player_pos.y), board, players)? {
+                            targetable = self.radial_range(Vector::new(player_pos.x - elem as f32 + 1.0, player_pos.y), radius, board, players)?;
+                            break;
+                        }
+                        //Final iteration, no obstacles
+                        if elem == range {
+                            targetable = self.radial_range(Vector::new(player_pos.x - elem as f32, player_pos.y), radius, board, players)?;
+                            break;
+                        }
+                    }
+                }
+            },
+            Direction::Right => {
+                if player_pos.x != board.get_board()?.first().unwrap().len() as f32 - 1.0 { //Right edge
+                    for elem in 1..range+1 {
+                        //Obstacle encountered, go back one element
+                        if !self.can_move(Vector::new(player_pos.x + elem as f32, player_pos.y), board, players)? {
+                            targetable = self.radial_range(Vector::new(player_pos.x + elem as f32 - 1.0, player_pos.y), radius, board, players)?;
+                            break;
+                        }
+                        //Final iteration, no obstacles
+                        if elem == range {
+                            targetable = self.radial_range(Vector::new(player_pos.x + elem as f32, player_pos.y), radius, board, players)?;
+                            break;
+                        }
+                    }
+                }
+            },
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates in the direction passed at the range given at the radius given. Using player will not be included
+    pub fn directed_line_radial(&self, range: u32, radius: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        //Cannot look off board
+        //We add 1 to `range` to make the call draw the correct range since we skip one element
+        match direction {
+            Direction::Up => {
+                targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y - range as f32), radius, board, players)?;
+            },
+            Direction::Down => {
+                targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y + range as f32), radius, board, players)?;
+            },
+            Direction::Left => {
+                targetable = self.radial_range(Vector::new(player_pos.x - range as f32, player_pos.y), radius, board, players)?;
+            },
+            Direction::Right => {
+                targetable = self.radial_range(Vector::new(player_pos.x + range as f32, player_pos.y), radius, board, players)?;
+            },
+        }
+
+        //Caster is not included
+        if targetable.contains(&player_pos) {
+            let index =  targetable.iter().position(|x| *x == player_pos)
+                .expect("Cannot find index of existing element entities::directed_line_radial");
+            targetable.remove(index);
         }
 
         Ok(targetable)
