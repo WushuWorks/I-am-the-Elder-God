@@ -69,6 +69,16 @@ website [here](https://www.mozilla.org/)
 
 Play game in a Firefox browser of your choice at `https://{github-username}.github.io/{repo name}/`
 
+## Architecture Notes (For Developers)
+
+1) The game is run on the Quicksilver engine. Which supports easy deployment to the web.
+2) The entire game is run by a simple state-machine to separate gameplay from other elements. 
+3) Within the game, most gameplay variables are explicitly set to certain values to eliminate ambiguity when translating to WASM.
+4) Due to engine efficiency limitations regarding dynamic text rendering, all text elements are pre-rendered at allocation.
+
+Unsupported engine functions such as looping music and simple animations are accomplished using fps counts from the window context,
+this is highly experimental and should not be relied on for functions that need high floating point accuracy.
+
 ## Sources and Inspirations Cited
 
 This game makes heavy use of the state machine used in [Mehen's Portable Casino](https://github.com/OtherAesop/mehens_portable_casino)
