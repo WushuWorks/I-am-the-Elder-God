@@ -77,6 +77,9 @@ pub struct ElderGame {
     selections: Cycle<IntoIter<u32>>,
     curr_selection: u32,
 
+    //Action information - [Range, ]
+
+
     //Atlas supports keys A-Z, Blank (# is the same tile), and Null (with the '-' key)
     game_tiles: Asset<Atlas>,
     token_tiles: Asset<Atlas>,
@@ -655,7 +658,7 @@ impl ElderGame {
             let selectable_coordinates = match self.player_ref[self.curr_player].get_class()? {
                 ClassType::Support  => {
                     match self.curr_selection {
-                        0 => vec![],
+                        0 => self.player_ref[self.curr_player].adjacent_range(3, &self.game_board, &self.player_ref)?,
                         1 => vec![],
                         2 => vec![],
                         _ => panic!("Tried to draw invalid ability.")
@@ -679,9 +682,9 @@ impl ElderGame {
                 },
                 ClassType::Wraith   => {
                     match self.curr_selection {
-                        0 => vec![],
-                        1 => vec![],
-                        2 => self.player_ref[self.curr_player].adjacent(&self.game_board, &self.player_ref),
+                        0 => self.player_ref[self.curr_player].adjacent_range(1, &self.game_board, &self.player_ref)?,
+                        1 => self.player_ref[self.curr_player].adjacent_range(1, &self.game_board, &self.player_ref)?,
+                        2 => self.player_ref[self.curr_player].adjacent_range(1, &self.game_board, &self.player_ref)?,
                         _ => panic!("Tried to draw invalid ability.")
                     }
                 },

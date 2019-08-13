@@ -315,8 +315,8 @@ impl Entity{
         attackable
     }
 
-    /// Returns a list of coordinates adjacent to the player
-    pub fn adjacent(&self, board: &GameBoard, players: &Vec<Entity>) -> Vec<Vector> {
+    /// Returns a list of attackable coordinates adjacent to the player
+    pub fn adjacent(&self, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
         let mut adjacent = vec![];
         let up = Vector::new(self.pos.x - 1.0, self.pos.y);
         let down = Vector::new(self.pos.x + 1.0, self.pos.y);
@@ -336,6 +336,27 @@ impl Entity{
             adjacent.push(right);
         }
 
-        adjacent
+        Ok(adjacent)
+    }
+
+    /// Returns a list of attackable coordinates adjacent to the player up to the range specified
+    pub fn adjacent_range(&self, range: u32, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        for row in board.get_board()? {
+            for cell in row {
+                let distance = cell.get_pos()? - player_pos;
+                if distance.x.abs() + distance.y.abs() <= range as f32 { //The cell is in range of the player
+                    if player_pos != cell.get_pos()? { //The cell is not on the player
+                        if self.can_attack(cell.get_pos()?, board, players) { //The cell can be attacked
+                            targetable.push(cell.get_pos()?);
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(targetable)
     }
 }
