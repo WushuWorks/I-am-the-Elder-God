@@ -76,7 +76,7 @@ Play game in a Firefox browser of your choice at `https://{github-username}.gith
 3) Within the game, most gameplay variables are explicitly set to certain values to eliminate ambiguity when translating to WASM.
 4) Due to engine efficiency limitations regarding dynamic text rendering, all text elements are pre-rendered at allocation.
 
-Unsupported engine functions such as looping music and simple animations are accomplished using fps counts from the window context,
+Unsupported engine functions such as looping music and simple animations are accomplished using timing based on fps counts from the window context,
 this is highly experimental and should not be relied on for functions that need high floating point accuracy.
 
 ## Sources and Inspirations Cited
