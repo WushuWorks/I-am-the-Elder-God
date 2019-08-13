@@ -3,6 +3,7 @@ Here we write the character classes that inhabit the field
 */
 use crate::gameplay_logic::game_board::GameBoard;
 use crate::gameplay_logic::gameplay_type::*;
+use crate::scenes::game::Direction;
 
 use quicksilver::prelude::*;
 
@@ -29,13 +30,13 @@ impl ClassType {
     ///Map enum to an index string if possible
     pub fn key(&self) -> &str {
          match self {
-            ClassType::Support => {"Support"},
-            ClassType::Assault => {"Assault"},
-            ClassType::Trapper => {"Trapper"},
-            ClassType::Wraith => {"Wraith"},
-            ClassType::Kraken => {"Kraken"},
-            ClassType::Elder => {"Elder"},
-            ClassType::NPC => {"-"} //This maps to a blank TerrainStatus
+             ClassType::Support => {"Support"},
+             ClassType::Assault => {"Assault"},
+             ClassType::Trapper => {"Trapper"},
+             ClassType::Wraith => {"Wraith"},
+             ClassType::Kraken => {"Kraken"},
+             ClassType::Elder => {"Elder"},
+             ClassType::NPC => {"-"} //This maps to a blank TerrainStatus
         }
     }
 }
@@ -44,91 +45,97 @@ impl ClassType {
 #[allow(unused)]
 #[derive(Debug, Clone, Copy)]
 pub struct Attributes {
-    hp: i32,
-    curr_hp: i32,
-    speed: u32,
-    armor: i32,
-    power: i32,
-    actions: u32,
+    hp: f32,
+    speed: f32,
+    armor: f32,
+    power: f32,
+    actions: f32,
+    exp: f32,
 }
 
 #[allow(unused)]
 impl Attributes {
     /// Initialize universal stats
-    pub fn new() -> Self { Self{hp: 1, curr_hp: 1, speed: 0, armor: 1, power: 1, actions: 0} }
+    pub fn new() -> Self { Self{hp: 1.0, speed: 0.0, armor: 1.0, power: 1.0, actions: 0.0, exp: 0.0} }
     /// Sets stats for a class
     pub fn set_class(&mut self, class: &ClassType) -> Result<Self> {
-        let hp: i32;
-        let curr_hp: i32;
-        let speed: u32;
-        let armor: i32;
-        let power: i32;
-        let actions: u32;
+        let hp: f32;
+        let speed: f32;
+        let armor: f32;
+        let power: f32;
+        let actions: f32;
         //Attribute allocation
         match class {
                     ClassType::Support => {
-                        hp = 100;
-                        speed = 3;
-                        armor = 2;
-                        power = 2;
-                        actions = 1;
+                        hp = 100.0;
+                        speed = 3.0;
+                        armor = 2.0;
+                        power = 2.0;
+                        actions = 1.0;
                     },
                     ClassType::Assault => {
-                        hp = 90;
-                        speed = 4;
-                        armor = 1;
-                        power = 4;
-                        actions = 1;
+                        hp = 90.0;
+                        speed = 4.0;
+                        armor = 1.0;
+                        power = 4.0;
+                        actions = 1.0;
                     },
                     ClassType::Trapper => {
-                        hp = 100;
-                        speed = 3;
-                        armor = 2;
-                        power = 2;
-                        actions = 1;
+                        hp = 100.0;
+                        speed = 3.0;
+                        armor = 2.0;
+                        power = 2.0;
+                        actions = 1.0;
                     }
                     ClassType::Wraith => {
-                        hp = 100;
-                        speed = 4;
-                        armor = 2;
-                        power = 2;
-                        actions = 1;
+                        hp = 100.0;
+                        speed = 4.0;
+                        armor = 2.0;
+                        power = 2.0;
+                        actions = 1.0;
                     },
                     ClassType::Kraken => {
-                        hp = 250;
-                        speed = 3;
-                        armor = 4;
-                        power = 4;
-                        actions = 1;
+                        hp = 200.0;
+                        speed = 4.0;
+                        armor = 3.0;
+                        power = 4.0;
+                        actions = 1.0;
                     },
                     ClassType::Elder => {
-                        hp = 500;
-                        speed = 3;
-                        armor = 2;
-                        power = 2;
-                        actions = 2;
-                    }
+                        hp = 500.0;
+                        speed = 4.0;
+                        armor = 5.0;
+                        power = 6.0;
+                        actions = 2.0;
+                    },
                     ClassType::NPC => {
-                        hp = 1;
-                        speed = 1;
-                        armor = 1;
-                        power = 1;
-                        actions = 1;
+                        hp = 1.0;
+                        speed = 1.0;
+                        armor = 1.0;
+                        power = 1.0;
+                        actions = 1.0;
                     }
         }
-        curr_hp = hp;
 
-        Ok(Self{hp, curr_hp, speed, armor, power, actions})
+        Ok(Self{hp, speed, armor, power, actions, exp: 0.0})
     }
-    pub fn set_custom_stats(&mut self, hp: i32, curr_hp: i32, speed: u32, armor: i32, power: i32, actions: u32) -> Result<Self> {
-        Ok(Self{hp, curr_hp, speed, armor, power, actions})
+    /// Makes a new set of custom stats
+    pub fn new_custom_stats(hp: f32, speed: f32, armor: f32, power: f32, actions: f32, exp: f32) -> Result<Self> {
+        Ok(Self{hp, speed, armor, power, actions, exp})
     }
-    pub fn get_hp(&self) -> &i32 { &self.hp }
-    pub fn get_curr_hp(&self) -> &i32 { &self.curr_hp }
-    pub fn get_speed(&self) -> &u32{ &self.speed }
-    pub fn get_armor(&self) -> &i32{ &self.armor }
-    pub fn get_power(&self) -> &i32{ &self.power }
-    pub fn get_actions(&self) -> &u32{ &self.actions }
+    pub fn get_hp(&self)      -> &f32 { &self.hp }
+    pub fn get_speed(&self)   -> &f32 { &self.speed }
+    pub fn get_armor(&self)   -> &f32 { &self.armor }
+    pub fn get_power(&self)   -> &f32 { &self.power }
+    pub fn get_actions(&self) -> &f32 { &self.actions }
+    pub fn get_exp(&self)     -> &f32 { &self.exp }
+    //Set
+    pub fn set_hp(&mut self, hp: f32)            { self.hp = hp }
+    pub fn set_speed(&mut self, speed: f32)      { self.speed = speed }
+    pub fn set_armor(&mut self, armor: f32)      { self.armor = armor }
+    pub fn set_power(&mut self, power: f32)      { self.power = power }
+    pub fn set_actions(&mut self, actions: f32)  { self.actions = actions }
+    pub fn set_exp(&mut self, exp: f32)          { self.exp = exp }
 }
 
 /// This models the most universal class
@@ -138,6 +145,8 @@ pub struct Entity {
     player: PlayerType,
     class: ClassType,
     stats: Attributes,
+    curr_stats: Attributes,
+    level: u32,
     pos: Vector,
     invincible: bool,
     tangible: bool, //Will this Entity be pass-through?
@@ -145,25 +154,14 @@ pub struct Entity {
 
 #[allow(unused)]
 impl Entity{
-    /// Makes class-less character
-    pub fn new_npc(player: PlayerType, hp: i32, curr_hp: i32, speed: u32, armor: i32, power: i32, actions: u32, pos: Vector, invincible: bool, tangible: bool) -> Result<Self> {
-        Ok(Self{
-            player,
-            class: ClassType::NPC,
-            stats: Attributes::new().set_custom_stats(hp, curr_hp, speed, armor, power, actions).expect("Cannot create npc with given stats"),
-            pos,
-            invincible,
-            tangible,
-        })
-    }
-    /// Sets a new character
-    pub fn new_char(class: ClassType, player: PlayerType, pos: Vector, invincible: bool) -> Result<Self>{
+    /// Makes a new character of ClassType
+    pub fn new_char(class: ClassType, player: PlayerType, level: u32, pos: Vector, invincible: bool) -> Result<Self>{
         Ok(Self{
             player,
             class,
             stats: Attributes::new().set_class(&class).expect("Cannot set class stats"),
-            pos,
-            invincible,
+            curr_stats: Attributes::new().set_class(&class).expect("Cannot set class stats"),
+            level, pos, invincible,
             tangible: true,
         })
     }
@@ -172,10 +170,16 @@ impl Entity{
     pub fn get_class(&self) -> Result<&ClassType> { Ok(&self.class) }
     pub fn get_tangible(&self) -> Result<bool> { Ok(self.tangible) }
     pub fn get_pos(&self) -> Result<Vector> { Ok(self.pos) }
+    pub fn get_level(&self) -> Result<u32> { Ok(self.level) }
     pub fn get_stats(&self) -> Result<&Attributes> { Ok(&self.stats) }
+    pub fn get_curr_stats(&self) -> Result<&Attributes> { Ok(&self.curr_stats) }
     /// Sets player info
     pub fn set_pos(&mut self, new_loc: Vector) -> Result<()> {
         self.pos = new_loc;
+        Ok(())
+    }
+    pub fn set_stats(&mut self, hp: f32, speed: f32, armor: f32, power: f32, actions: f32, exp: f32) -> Result<()> {
+        self.stats = Attributes::new_custom_stats(hp, speed, armor, power, actions, exp)?;
         Ok(())
     }
 
@@ -185,7 +189,6 @@ impl Entity{
         let cell = board.get_board()?[location.y as usize][location.x as usize];
         let land = *cell.get_land()?;
         let cond = *cell.get_cond()?;
-        let occupant = cell.get_occupant()?;
 
         if self.tangible { //If we are tangible we need to check for tangible barriers
             for player in players { //Check all players to see if there is a tangible player in location
@@ -199,12 +202,11 @@ impl Entity{
             }
 
             //Check for impassable TerrainStatus types
-            if cond == TerrainStatus::Frozen || cond == TerrainStatus::Shielded || cond == TerrainStatus::Impassable {
-                movable = false;
-            }
-            // Check for tangible occupant
-            if occupant.get_tangible()? {
-                movable = false;
+            match cond {
+                TerrainStatus::Frozen     => movable = false,
+                TerrainStatus::Shielded   => movable = false,
+                TerrainStatus::Impassable => movable = false,
+                _                         => {}
             }
         }
 
@@ -215,14 +217,417 @@ impl Entity{
 
         Ok(movable)
     }
+
+    /// Returns a string corresponding to the name of the passed ability number
+    /// Accepts ability numbers 1-3 inclusively.
+    pub fn act(&self, action_index: u32, _board: &GameBoard, _players: &Vec<Entity>) -> Result<&str> {
+        let action = match self.class {
+            ClassType::Support  => {
+                match action_index {
+                    1 => { Ok("Bio") },
+                    2 => { Ok("Shield") },
+                    3 => { Ok("Renew") },
+                    _ => { panic!("Unknown Support Ability Number") }
+                }
+            },
+            ClassType::Assault  => {
+                match action_index {
+                    1 => { Ok("Pierce") },
+                    2 => { Ok("Grenade") },
+                    3 => { Ok("Airstrike") },
+                    _ => { panic!("Unknown Assault Ability Number") }
+                }
+            },
+            ClassType::Trapper  => {
+                match action_index {
+                    1 => { Ok("Caltrop") },
+                    2 => { Ok("Spear") },
+                    3 => { Ok("Cage") },
+                    _ => { panic!("Unknown Trapper Ability Number") }
+                }
+            },
+            ClassType::Wraith   => {
+                match action_index {
+                    1 => { Ok("Drain") },
+                    2 => { Ok("Decoy") },
+                    3 => { Ok("Rend") },
+                    _ => { panic!("Unknown Wraith Ability Number") }
+                }
+            },
+            _                   => { panic!("Unsupported Class for abilities") }
+        };
+
+        action
+    }
+
+    /// Returns true if an ability from 1-3, inclusively, can be used. False otherwise
+    pub fn can_act(&self, action_index: u32, _board: &GameBoard, _players: &Vec<Entity>) -> Result<bool> {
+        let actable = match self.class {
+            ClassType::Support  => {
+                match action_index {
+                    1 => { if self.level >= 1 { true } else { false } },
+                    2 => { if self.level >= 2 { true } else { false } },
+                    3 => { if self.level >= 3 { true } else { false } },
+                    _ => { false }
+                }
+            },
+            ClassType::Assault  => {
+                match action_index {
+                    1 => { if self.level >= 1 { true } else { false } },
+                    2 => { if self.level >= 2 { true } else { false } },
+                    3 => { if self.level >= 3 { true } else { false } },
+                    _ => { false }
+                }
+            },
+            ClassType::Trapper  => {
+                match action_index {
+                    1 => { if self.level >= 1 { true } else { false } },
+                    2 => { if self.level >= 2 { true } else { false } },
+                    3 => { if self.level >= 3 { true } else { false } },
+                    _ => { false }
+                }
+            },
+            ClassType::Wraith   => {
+                match action_index {
+                    1 => { true },
+                    2 => { true },
+                    3 => { true },
+                    _ => { false }
+                }
+            },
+            _                   => { false }
+        };
+
+        Ok(actable)
+    }
+
+    /// Returns true if the passed location is attackable, false otherwise
+    pub fn can_attack(&self, location: Vector, board: &GameBoard, players: &Vec<Entity>) -> bool {
+        let mut attackable = true; //assume truth and attempt to disprove
+        let cell = board.get_board().unwrap()[location.y as usize][location.x as usize];
+        let land = *cell.get_land().unwrap();
+        let cond = *cell.get_cond().unwrap();
+
+        // Offboard spaces should always be unselectable
+        if land == Terrain::Empty {
+            attackable = false;
+        }
+
+        attackable
+    }
+
+    /// Returns a list of attackable coordinates of all characters controlled by a player
+    pub fn list_range_ally(&self, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        for player in players { // For all players
+            for row in board.get_board()? {
+                for cell in row { //The cell is on the board
+                    if self.can_attack(cell.get_pos()?, board, players) { //The cell can be attacked
+                        if player.get_player()? == self.get_player()? && cell.get_pos()? == player.get_pos()? { //The player is an ally and is on the cell being examined
+                            targetable.push(cell.get_pos()?);
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates adjacent to the player up to the range specified
+    pub fn adjacent_range(&self, range: u32, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        for row in board.get_board()? {
+            for cell in row {
+                let distance = cell.get_pos()? - player_pos;
+                if distance.x.abs() + distance.y.abs() <= range as f32 { //The cell is in range of the player
+                    if player_pos != cell.get_pos()? { //The cell is not on the player
+                        if self.can_attack(cell.get_pos()?, board, players) { //The cell can be attacked
+                            targetable.push(cell.get_pos()?);
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates at the specified range around the player
+    pub fn adjacent_shell(&self, range: u32, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        for row in board.get_board()? {
+            for cell in row {
+                let distance = cell.get_pos()? - player_pos;
+                if distance.x.abs() + distance.y.abs() == range as f32 { //The cell is in range of the player
+                    if self.can_attack(cell.get_pos()?, board, players) { //The cell can be attacked
+                        targetable.push(cell.get_pos()?);
+                    }
+                }
+            }
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates from the passed coordinate outwards
+    pub fn radial_range(&self, location: Vector, radius: u32, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = location;
+
+        for row in board.get_board()? {
+            for cell in row {
+                let distance = cell.get_pos()? - player_pos;
+                if distance.x.abs() + distance.y.abs() <= radius as f32 { //The cell is in range of the player
+                    if self.can_attack(cell.get_pos()?, board, players) { //The cell can be attacked
+                        targetable.push(cell.get_pos()?);
+                    }
+                }
+            }
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates in the direction passed up to the range given
+    pub fn directed_line_range(&self, range: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        //Cannot look off board
+        //We add 1 to `range` to make the call draw the correct range since we skip one element
+        match direction {
+            Direction::Up => {
+                if player_pos.y != 0.0 { //Top edge
+                    for elem in 1..range+1 {
+                        if player_pos.y - elem as f32 <= 0.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x, player_pos.y - elem as f32), board, players) {
+                            targetable.push(Vector::new(player_pos.x, player_pos.y - elem as f32));
+                        }
+                    }
+                }
+            },
+            Direction::Down => {
+                if player_pos.y != board.get_board()?.len() as f32 - 1.0 { //Bottom edge
+                    for elem in 1..range+1 {
+                        if player_pos.y + elem as f32 >= board.get_board()?.len() as f32 - 1.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x, player_pos.y + elem as f32), board, players) {
+                            targetable.push(Vector::new(player_pos.x, player_pos.y + elem as f32));
+                        }
+                    }
+                }
+            },
+            Direction::Left => {
+                if player_pos.x != 0.0 { //Left Edge
+                    for elem in 1..range+1 {
+                        if player_pos.x - elem as f32 <= 0.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x - elem as f32, player_pos.y), board, players) {
+                            targetable.push(Vector::new(player_pos.x - elem as f32, player_pos.y));
+                        }
+                    }
+                }
+            },
+            Direction::Right => {
+                if player_pos.x != board.get_board()?.first().unwrap().len() as f32 - 1.0 { //Right edge
+                    for elem in 1..range+1 {
+                        if player_pos.x + elem as f32 >= board.get_board()?.first().unwrap().len() as f32 - 1.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x + elem as f32, player_pos.y), board, players) {
+                            targetable.push(Vector::new(player_pos.x + elem as f32, player_pos.y));
+                        }
+                    }
+                }
+            },
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates in the direction passed up to the range given, stopping at an un-move-into-able obstacle
+    pub fn directed_line_cast(&self, range: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        //Cannot look off board
+        //We add 1 to `range` to make the call draw the correct range since we skip one element
+        match direction {
+            Direction::Up => {
+                if player_pos.y != 0.0 { //Top edge
+                    for elem in 1..range+1 {
+                        if player_pos.y - elem as f32 <= 0.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x, player_pos.y - elem as f32), board, players) {
+                            targetable.push(Vector::new(player_pos.x, player_pos.y - elem as f32));
+                        } else {
+                            if self.can_move(Vector::new(player_pos.x, player_pos.y - elem as f32), board, players)? {
+                                targetable.push(Vector::new(player_pos.x, player_pos.y - elem as f32));
+                            }
+                            break;
+                        }
+                    }
+                }
+            },
+            Direction::Down => {
+                if player_pos.y != board.get_board()?.len() as f32 - 1.0 { //Bottom edge
+                    for elem in 1..range+1 {
+                        if player_pos.y + elem as f32 >= board.get_board()?.len() as f32 - 1.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x, player_pos.y + elem as f32), board, players) {
+                            targetable.push(Vector::new(player_pos.x, player_pos.y + elem as f32));
+                        } else {
+                            if self.can_move(Vector::new(player_pos.x, player_pos.y + elem as f32), board, players)? {
+                                targetable.push(Vector::new(player_pos.x, player_pos.y + elem as f32));
+                            }
+                            break;
+                        }
+                    }
+                }
+            },
+            Direction::Left => {
+                if player_pos.x != 0.0 { //Left Edge
+                    for elem in 1..range+1 {
+                        if player_pos.x - elem as f32 <= 0.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x - elem as f32, player_pos.y), board, players) {
+                            targetable.push(Vector::new(player_pos.x - elem as f32, player_pos.y));
+                        } else {
+                            if self.can_move(Vector::new(player_pos.x - elem as f32, player_pos.y), board, players)? {
+                                targetable.push(Vector::new(player_pos.x - elem as f32, player_pos.y));
+                            }
+                            break;
+                        }
+                    }
+                }
+            },
+            Direction::Right => {
+                if player_pos.x != board.get_board()?.first().unwrap().len() as f32 - 1.0 { //Right edge
+                    for elem in 1..range+1 {
+                        if player_pos.x + elem as f32 >= board.get_board()?.first().unwrap().len() as f32 - 1.0 { break } //Stop if we hit an edge
+                        if self.can_attack(Vector::new(player_pos.x + elem as f32, player_pos.y), board, players) {
+                            targetable.push(Vector::new(player_pos.x + elem as f32, player_pos.y));
+                        } else {
+                            if self.can_move(Vector::new(player_pos.x + elem as f32, player_pos.y), board, players)? {
+                                targetable.push(Vector::new(player_pos.x + elem as f32, player_pos.y));
+                            }
+                            break;
+                        }
+                    }
+                }
+            },
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates up to the direction passed at the radius given, stopping at an un-move-into-able obstacle
+    pub fn directed_line_radial_cast(&self, range: u32, radius: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        //Cannot look off board
+        //We add 1 to `range` to make the call draw the correct range since we skip one element
+        match direction {
+            Direction::Up => {
+                if player_pos.y != 0.0 { //Top edge
+                    for elem in 1..range+1 {
+                        //Obstacle encountered, go back one element
+                        if !self.can_move(Vector::new(player_pos.x, player_pos.y - elem as f32), board, players)? {
+                            targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y - elem as f32 + 1.0), radius, board, players)?;
+                            break;
+                        }
+                        //Final iteration, no obstacles
+                        if elem == range {
+                            targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y - elem as f32), radius, board, players)?;
+                            break;
+                        }
+                    }
+                }
+            },
+            Direction::Down => {
+                if player_pos.y != board.get_board()?.len() as f32 - 1.0 { //Bottom edge
+                    for elem in 1..range+1 {
+                        //Obstacle encountered, go back one element
+                        if !self.can_move(Vector::new(player_pos.x, player_pos.y + elem as f32), board, players)? {
+                            targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y + elem as f32 - 1.0), radius, board, players)?;
+                            break;
+                        }
+                        //Final iteration, no obstacles
+                        if elem == range {
+                            targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y + elem as f32), radius, board, players)?;
+                            break;
+                        }
+
+                    }
+                }
+            },
+            Direction::Left => {
+                if player_pos.x != 0.0 { //Left Edge
+                    for elem in 1..range+1 {
+                        //Obstacle encountered, go back one element
+                        if !self.can_move(Vector::new(player_pos.x - elem as f32, player_pos.y), board, players)? {
+                            targetable = self.radial_range(Vector::new(player_pos.x - elem as f32 + 1.0, player_pos.y), radius, board, players)?;
+                            break;
+                        }
+                        //Final iteration, no obstacles
+                        if elem == range {
+                            targetable = self.radial_range(Vector::new(player_pos.x - elem as f32, player_pos.y), radius, board, players)?;
+                            break;
+                        }
+                    }
+                }
+            },
+            Direction::Right => {
+                if player_pos.x != board.get_board()?.first().unwrap().len() as f32 - 1.0 { //Right edge
+                    for elem in 1..range+1 {
+                        //Obstacle encountered, go back one element
+                        if !self.can_move(Vector::new(player_pos.x + elem as f32, player_pos.y), board, players)? {
+                            targetable = self.radial_range(Vector::new(player_pos.x + elem as f32 - 1.0, player_pos.y), radius, board, players)?;
+                            break;
+                        }
+                        //Final iteration, no obstacles
+                        if elem == range {
+                            targetable = self.radial_range(Vector::new(player_pos.x + elem as f32, player_pos.y), radius, board, players)?;
+                            break;
+                        }
+                    }
+                }
+            },
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates in the direction passed at the range given at the radius given. Using player will not be included
+    pub fn directed_line_radial(&self, range: u32, radius: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        //Cannot look off board
+        //We add 1 to `range` to make the call draw the correct range since we skip one element
+        match direction {
+            Direction::Up => {
+                targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y - range as f32), radius, board, players)?;
+            },
+            Direction::Down => {
+                targetable = self.radial_range(Vector::new(player_pos.x, player_pos.y + range as f32), radius, board, players)?;
+            },
+            Direction::Left => {
+                targetable = self.radial_range(Vector::new(player_pos.x - range as f32, player_pos.y), radius, board, players)?;
+            },
+            Direction::Right => {
+                targetable = self.radial_range(Vector::new(player_pos.x + range as f32, player_pos.y), radius, board, players)?;
+            },
+        }
+
+        //Caster is not included
+        if targetable.contains(&player_pos) {
+            let index =  targetable.iter().position(|x| *x == player_pos)
+                .expect("Cannot find index of existing element entities::directed_line_radial");
+            targetable.remove(index);
+        }
+
+        Ok(targetable)
+    }
 }
-
-
-
-/// Class abilities
-trait Wraith {}
-trait Kraken {}
-trait Elder {}
-trait Support {}
-trait Assault {}
-trait Trapper {}

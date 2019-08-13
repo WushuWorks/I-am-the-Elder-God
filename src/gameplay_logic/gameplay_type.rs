@@ -14,6 +14,7 @@ pub enum Terrain {
     City,
     Wall,
     Pit,
+    Destroyed,
     Empty, //Define invisible space with this
 }
 
@@ -27,7 +28,8 @@ impl Terrain {
             Terrain::Mountain => Some("M"),
             Terrain::City => Some("C"),
             Terrain::Wall => Some("W"),
-            Terrain::Pit => Some("X"),
+            Terrain::Pit => Some("O"),
+            Terrain::Destroyed  => Some("X"),
             Terrain::Empty => Some("-"),
         }
     }
@@ -42,15 +44,15 @@ pub fn to_terrain(key: &str) -> Option<Terrain> {
         "M" => Some(Terrain::Mountain),
         "C" => Some(Terrain::City),
         "W" => Some(Terrain::Wall),
-        "X" => Some(Terrain::Pit),
+        "O" => Some(Terrain::Pit),
+        "X" => Some(Terrain::Destroyed),
         "-" => Some(Terrain::Empty),
         _ => None,
     }
 }
 
-///The conditions a land can be in
+///The conditions a land can be in.
 #[derive(Debug, PartialEq, Clone, Copy)]
-#[allow(unused)]
 pub enum TerrainStatus {
     Normal,
     Burning,
