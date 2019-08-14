@@ -22,10 +22,26 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 This will be a 3 vs 1 board game featuring a 'Support-Assault-Trapper' S.A.T. team  versus  Yt'kathl the Dream.
 
     Unique player-class abilities
-    Evolving Eldritch enemy
+    Evolving Eldritch enemy and Hunters
     Boardgame turn based gameplay.
 
 Visit the project [website](https://www.wushuworks.com/projects/i-am-the-elder-god) for more details
+
+# Project Notes
+
+### What are you trying to accomplish?
+A fun game that is playable 'in 9 seconds, on the net'. Future plans are refinement and an AI opponent.
+
+### Why Rust? Why not Unity, Unreal, etc.?
+Unity's WebGL doesn't function well enough to be truly '1-click' play and Rust has better properties than C++ (as in Unreal) for game
+development. My hope is that this will encourage further investment into Rust as a game development language.
+
+### Sources and Inspirations Cited
+
+This game makes heavy use of the state machine used in [Mehen's Portable Casino](https://github.com/OtherAesop/mehens_portable_casino)
+and shares structure and code with it.
+
+This game was heavily inspired by [Evolve](https://2k.com/en-US/game/evolve/) and [Arkham Horror](https://www.fantasyflightgames.com/en/products/arkham-horror-third-edition/)
 
 # Supported Browsers
 
@@ -74,14 +90,7 @@ Play game in a Firefox browser of your choice at `https://{github-username}.gith
 1) The game is run on the Quicksilver engine. Which supports easy deployment to the web.
 2) The entire game is run by a simple state-machine to separate gameplay from other elements. 
 3) Within the game, most gameplay variables are explicitly set to certain values to eliminate ambiguity when translating to WASM.
-4) Due to engine efficiency limitations regarding dynamic text rendering, all text elements are pre-rendered at allocation.
+4) Due to engine limitations and efficiency considerations regarding dynamic text rendering, all text elements are pre-rendered at allocation.
 
 Unsupported engine functions such as looping music and simple animations are accomplished using timing based on fps counts from the window context,
 this is highly experimental and should not be relied on for functions that need high floating point accuracy.
-
-## Sources and Inspirations Cited
-
-This game makes heavy use of the state machine used in [Mehen's Portable Casino](https://github.com/OtherAesop/mehens_portable_casino)
-and shares structure and code with it.
-
-This game was heavily inspired by [Evolve](https://2k.com/en-US/game/evolve/) and [Arkham Horror](https://www.fantasyflightgames.com/en/products/arkham-horror-third-edition/)
