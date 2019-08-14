@@ -960,6 +960,7 @@ impl ElderGame {
     pub fn drain(&self, targets: Vec<Vector>) -> Result<()>  {
         Ok(())
     }
+    /// Freezes surrounding enemies and teleports back to location this turn begun at
     pub fn decoy(&self, targets: Vec<Vector>) -> Result<()>  {
         Ok(())
     }
