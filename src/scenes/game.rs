@@ -2,14 +2,16 @@ use crate::game_logic::scene_type::SceneReturn;
 use crate::gameplay_logic::entities::*;
 use crate::gameplay_logic::animator::Animator;
 use crate::gameplay_logic::game_board::GameBoard;
+use crate::gameplay_logic::gameplay_type::TerrainStatus;
 use crate::game_logic::draw_helper::*;
 
 //Resources
 use quicksilver::prelude::*;
-use quicksilver::graphics::{Atlas};
+use quicksilver::graphics::Atlas;
 //Std
 use std::iter::Cycle;
 use std::vec::IntoIter;
+use rand::Rng;
 
 #[derive(PartialEq)]
 enum ActionType {
@@ -385,7 +387,9 @@ impl ElderGame {
                         //Check to see if a player is allowed to use the selected ability and use it if so
                         if self.player_ref[self.curr_player].can_act(self.curr_selection + 1, &self.game_board, &self.player_ref)? {
                             self.click.execute(|music| { music.play() })?;
-                            self.player_ref[self.curr_player].act(self.curr_selection + 1, self.curr_dir, &self.game_board, &self.player_ref)?;
+                            let current_player = &self.player_ref[self.curr_player];
+                            let target_action = current_player.act(self.curr_selection + 1, self.curr_dir, &self.game_board, &self.player_ref)?;
+                            self.execute_action(target_action.0, target_action.1)?;
                             self.actions -= 1;
                         } else { self.soft_click.execute(|music| { music.play() })?; }
                     }
@@ -492,7 +496,7 @@ impl ElderGame {
                             Transform::IDENTITY, 8.04)?;
 
         //Get Player Info and calculate current bar size
-        let player_team = self.player_ref[self.curr_player].get_player()?;
+        let player_team = *self.player_ref[self.curr_player].get_player()?;
 
         let player_max_hp = *self.player_ref[self.curr_player].get_stats()?.get_hp() as f32;
         let player_hp = *self.player_ref[self.curr_player].get_curr_stats()?.get_hp() as f32;
@@ -826,4 +830,127 @@ impl ElderGame {
         Ok(retval)
     }
 
+}
+
+/// This impl contains Action definitions and a routing function to execute them
+/// We should be guaranteed by here to never receive out of index coordinates so we do not check for that
+#[allow(unused)]
+impl ElderGame {
+    /// Executes passed action on the targets passed
+    pub fn execute_action(&mut self, targets: Vec<Vector>, ability_name: ActionAbility) -> Result<()> {
+        match ability_name {
+            ActionAbility::Bio      => { self.bio(targets)? },
+            ActionAbility::Shield   => { self.shield(targets)? },
+            ActionAbility::Renew    => { self.renew(targets)? },
+            ActionAbility::Pierce   => { self.pierce(targets)? },
+            ActionAbility::Grenade  => { self.grenade(targets)? },
+            ActionAbility::Airraid  => { self.airraid(targets)? },
+            ActionAbility::Caltrop  => { self.caltrop(targets)? },
+            ActionAbility::Spear    => { self.spear(targets)? },
+            ActionAbility::Cage     => { self.cage(targets)? },
+            ActionAbility::Drain    => { self.drain(targets)? },
+            ActionAbility::Decoy    => { self.decoy(targets)? },
+            ActionAbility::Rend     => { self.rend(targets)? },
+        };
+
+        Ok(())
+    }
+    //Support Class
+    ///Heals allies, damages non-allies
+    pub fn bio(&mut self, targets: Vec<Vector>) -> Result<()> {
+        let mut rng = rand::thread_rng();
+        let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
+        let heal_pow = pow * 10.0 + rng.gen_range(1.0, pow);
+        let curr_team = *self.player_ref[self.curr_player].get_player()?;
+
+        for target in targets {
+            for player in &mut self.player_ref {
+                if target == player.get_pos()? { //If a player is on a targeted space
+                    if curr_team == *player.get_player()? { //If player is allied
+                        //We must prevent overfilling hp
+                        let new_hp = *player.get_curr_stats()?.get_hp() + heal_pow;
+                        let max_hp = *player.get_stats()?.get_hp();
+                        let hp = *player.get_curr_stats()?.get_hp();
+
+                        if new_hp > max_hp - hp { //if new hp value is greater than max
+                            let diff = max_hp - hp;
+                            player.get_curr_stats()?.add_hp(diff); //Set it to max
+                        } else {
+                            player.get_curr_stats()?.add_hp(heal_pow);
+                        }
+                    } else {  //Player is NOT allied, here we factor in armor
+                        let damage = player.get_curr_stats()?.armor_reduce(heal_pow);
+                        player.get_curr_stats()?.add_hp(-damage);
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+    pub fn shield(&self, targets: Vec<Vector>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn renew(&self, targets: Vec<Vector>) -> Result<()>  {
+        Ok(())
+    }
+
+    //Assault Class
+    /// Shoots a piercing shot that damages everything it hits that doesn't have a shield
+    /// Including shields and frozen tiles
+    pub fn pierce(&mut self, targets: Vec<Vector>) -> Result<()>  {
+        let mut rng = rand::thread_rng();
+        let pow = self.player_ref[self.curr_player].get_curr_stats()?.get_power();
+        let dmg_pow = pow * 10.0 + rng.gen_range(1.0, pow);
+
+        //Damage everything hit
+        for target in targets {
+            let mut cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cond = *cell.get_cond()?;
+
+            //Check if it is a player and is not shielded
+            for player in &mut self.player_ref {
+                if player.get_pos()? == target && cond != TerrainStatus::Shielded { //Damage all unshielded players in range
+                    let damage = player.get_curr_stats()?.armor_reduce(dmg_pow);
+                    player.get_curr_stats()?.add_hp(-damage);
+                }
+            }
+            //Check for TerrainStatus and decrement if hit
+            match cond {
+                TerrainStatus::Shielded => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter(); },
+                TerrainStatus::Frozen   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter(); },
+                _                       => {/*Ignore other types*/}
+            }
+
+        }
+        Ok(())
+    }
+    pub fn grenade(&self, targets: Vec<Vector>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn airraid(&self, targets: Vec<Vector>) -> Result<()>  {
+        Ok(())
+    }
+
+    //Trapper Class
+    pub fn caltrop(&self, targets: Vec<Vector>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn spear(&self, targets: Vec<Vector>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn cage(&self, targets: Vec<Vector>) -> Result<()>  {
+        Ok(())
+    }
+
+    //Wraith Class
+    pub fn drain(&self, targets: Vec<Vector>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn decoy(&self, targets: Vec<Vector>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn rend(&self, targets: Vec<Vector>) -> Result<()>  {
+        Ok(())
+    }
 }

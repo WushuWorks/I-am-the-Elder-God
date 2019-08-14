@@ -8,6 +8,14 @@ use crate::scenes::game::Direction;
 use quicksilver::prelude::*;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
+pub enum ActionAbility {
+    Bio, Shield, Renew,
+    Pierce, Grenade, Airraid,
+    Caltrop, Spear, Cage,
+    Drain, Decoy, Rend,
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum PlayerType {
     Player1,
     Player2,
@@ -88,8 +96,8 @@ impl Attributes {
                         actions = 1.0;
                     }
                     ClassType::Wraith => {
-                        hp = 100.0;
-                        speed = 4.0;
+                        hp = 200.0;
+                        speed = 6.0;
                         armor = 2.0;
                         power = 2.0;
                         actions = 1.0;
@@ -130,12 +138,46 @@ impl Attributes {
     pub fn get_actions(&self) -> &f32 { &self.actions }
     pub fn get_exp(&self)     -> &f32 { &self.exp }
     //Set
-    pub fn set_hp(&mut self, hp: f32)            { self.hp = hp }
-    pub fn set_speed(&mut self, speed: f32)      { self.speed = speed }
-    pub fn set_armor(&mut self, armor: f32)      { self.armor = armor }
-    pub fn set_power(&mut self, power: f32)      { self.power = power }
-    pub fn set_actions(&mut self, actions: f32)  { self.actions = actions }
-    pub fn set_exp(&mut self, exp: f32)          { self.exp = exp }
+    //pub fn set_hp(&mut self, hp: f32)            { self.hp = hp }
+    //pub fn set_speed(&mut self, speed: f32)      { self.speed = speed }
+    //pub fn set_armor(&mut self, armor: f32)      { self.armor = armor }
+    //pub fn set_power(&mut self, power: f32)      { self.power = power }
+    //pub fn set_actions(&mut self, actions: f32)  { self.actions = actions }
+    //pub fn set_exp(&mut self, exp: f32)          { self.exp = exp }
+    //Checked stat changes
+    /// Add or subtract hp, checks for overflow, and prevents setting lower than 0.0
+    pub fn add_hp(&mut self, hp: f32) -> bool    {
+        let retval;
+
+        //Check for over or underflows
+        if self.hp + hp < std::f32::MIN || self.hp + hp > std::f32::MAX {
+            println!("Under or overflow occured and ignored in damage calculation");
+            retval = false;
+        } else {
+            if self.hp + hp <= 0.0 { //Prevent negative hp
+                self.hp = 0.0;
+            } else {
+                self.hp += hp;
+            }
+
+            retval = true;
+        }
+
+        retval
+    }
+    ///Takes a positive damage value and returns an armor reduced value
+    pub fn armor_reduce(&mut self, dmg: f32) -> f32{
+        let retval;
+
+        //Reduces damage by armor% if not negative
+        if dmg.is_sign_negative(){
+            retval = 0.0;
+        } else {
+            retval = dmg - dmg * (*self.get_armor()/10.0);
+        }
+
+        retval
+    }
 }
 
 /// This models the most universal class
@@ -172,7 +214,7 @@ impl Entity{
     pub fn get_pos(&self) -> Result<Vector> { Ok(self.pos) }
     pub fn get_level(&self) -> Result<u32> { Ok(self.level) }
     pub fn get_stats(&self) -> Result<&Attributes> { Ok(&self.stats) }
-    pub fn get_curr_stats(&self) -> Result<&Attributes> { Ok(&self.curr_stats) }
+    pub fn get_curr_stats(&mut self) -> Result<&mut Attributes> { Ok(&mut self.curr_stats) }
     /// Sets player info
     pub fn set_pos(&mut self, new_loc: Vector) -> Result<()> {
         self.pos = new_loc;
@@ -218,86 +260,6 @@ impl Entity{
         Ok(movable)
     }
 
-    /// Returns a string corresponding to the name of the passed ability number after executing the ability
-    /// Accepts ability numbers 1-3 inclusively.
-    pub fn act(&self, action_index: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<&str> {
-        let targets; //contains a list of targets for an ability
-
-        let action = match self.class {
-            ClassType::Support  => {
-                match action_index {
-                    1 => {
-                        targets = self.adjacent_range(3, board, players)?;
-                        Ok("Bio")
-                    },
-                    2 => {
-                        targets = self.list_range_ally(board, players)?;
-                        Ok("Shield")
-                    },
-                    3 => {
-                        targets = self.adjacent_range(2, board, players)?;
-                        Ok("Renew")
-                    },
-                    _ => { panic!("Unknown Support Ability Number") }
-                }
-            },
-            ClassType::Assault  => {
-                match action_index {
-                    1 => {
-                        targets = self.directed_line_range(2, direction, board, players)?;
-                        Ok("Pierce")
-                    },
-                    2 => {
-                        targets = self.directed_line_radial_cast(3, 1, direction, board, players)?;
-                        Ok("Grenade")
-                    },
-                    3 => {
-                        targets = self.directed_line_radial(3, 3, direction, board, players)?;
-                        Ok("Airstrike")
-                    },
-                    _ => { panic!("Unknown Assault Ability Number") }
-                }
-            },
-            ClassType::Trapper  => {
-                match action_index {
-                    1 => {
-                        targets = self.directed_line_radial(1, 1, direction, board, players)?;
-                        Ok("Caltrop")
-                    },
-                    2 => {
-                        targets = self.directed_line_cast(6, direction, board, players)?;
-                        Ok("Spear")
-                    },
-                    3 => {
-                        targets = self.adjacent_shell(3, board, players)?;
-                        Ok("Cage")
-                    },
-                    _ => { panic!("Unknown Trapper Ability Number") }
-                }
-            },
-            ClassType::Wraith   => {
-                match action_index {
-                    1 => {
-                        targets = self.adjacent_range(1, board, players)?;
-                        Ok("Drain") 
-                    },
-                    2 => {
-                        targets = self.adjacent_range(1, board, players)?;
-                        Ok("Decoy")
-                    },
-                    3 => {
-                        targets = self.adjacent_range(1, board, players)?;
-                        Ok("Rend")
-                    },
-                    _ => { panic!("Unknown Wraith Ability Number") }
-                }
-            },
-            _                   => { panic!("Unsupported Class for abilities") }
-        };
-
-        action
-    }
-
     /// Returns true if an ability from 1-3, inclusively, can be used. False otherwise
     pub fn can_act(&self, action_index: u32, _board: &GameBoard, _players: &Vec<Entity>) -> Result<bool> {
         let actable = match self.class {
@@ -339,65 +301,95 @@ impl Entity{
         Ok(actable)
     }
 
+    /// Returns a string corresponding to the name of the passed ability number and a Vec of Vectors that it targets
+    /// Accepts ability numbers 1-3 inclusively.
+    pub fn act(&self, action_index: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<(Vec<Vector>, ActionAbility)> {
+        let targets; //contains a list of targets for an ability
+
+        let action = match self.class {
+            ClassType::Support  => {
+                match action_index {
+                    1 => {
+                        targets = self.adjacent_range(3, board, players)?;;
+                        ActionAbility::Bio
+                    },
+                    2 => {
+                        targets = self.list_range_ally(board, players)?;
+                        ActionAbility::Shield
+                    },
+                    3 => {
+                        targets = self.adjacent_range(2, board, players)?;
+                        ActionAbility::Renew
+                    },
+                    _ => { panic!("Unknown Support Ability Number") }
+                }
+            },
+            ClassType::Assault  => {
+                match action_index {
+                    1 => {
+                        targets = self.directed_line_range(2, direction, board, players)?;
+                        ActionAbility::Pierce
+                    },
+                    2 => {
+                        targets = self.directed_line_radial_cast(3, 1, direction, board, players)?;
+                        ActionAbility::Grenade
+                    },
+                    3 => {
+                        targets = self.directed_line_radial(3, 3, direction, board, players)?;
+                        ActionAbility::Airraid
+                    },
+                    _ => { panic!("Unknown Assault Ability Number") }
+                }
+            },
+            ClassType::Trapper  => {
+                match action_index {
+                    1 => {
+                        targets = self.directed_line_radial(1, 1, direction, board, players)?;
+                        ActionAbility::Caltrop
+                    },
+                    2 => {
+                        targets = self.directed_line_cast(6, direction, board, players)?;
+                        ActionAbility::Spear
+                    },
+                    3 => {
+                        targets = self.adjacent_shell(3, board, players)?;
+                        ActionAbility::Cage
+                    },
+                    _ => { panic!("Unknown Trapper Ability Number") }
+                }
+            },
+            ClassType::Wraith   => {
+                match action_index {
+                    1 => {
+                        targets = self.adjacent_range(1, board, players)?;
+                        ActionAbility::Drain
+                    },
+                    2 => {
+                        targets = self.adjacent_range(1, board, players)?;
+                        ActionAbility::Decoy
+                    },
+                    3 => {
+                        targets = self.adjacent_range(1, board, players)?;
+                        ActionAbility::Rend
+                    },
+                    _ => { panic!("Unknown Wraith Ability Number") }
+                }
+            },
+            _                   => { panic!("Unsupported Class for abilities") }
+        };
+
+        Ok((targets, action))
+    }
 }
-
-///This impl contains Action definitions
-impl Entity {
-    //Support Class
-    pub fn bio(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()> {
-        Ok(())
-    }
-    pub fn shield(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
-        Ok(())
-    }
-    pub fn renew(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
-        Ok(())
-    }
-
-    //Assault Class
-    pub fn pierce(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
-        Ok(())
-    }
-    pub fn grenade(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
-        Ok(())
-    }
-    pub fn airraid(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
-        Ok(())
-    }
-
-    //Trapper Class
-    pub fn caltrop(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
-        Ok(())
-    }
-    pub fn spear(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
-        Ok(())
-    }
-    pub fn cage(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
-        Ok(())
-    }
-
-    //Wraith Class
-    pub fn drain(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
-        Ok(())
-    }
-    pub fn decoy(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
-        Ok(())
-    }
-    pub fn rend(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
-        Ok(())
-    }
-}
-
-
 
 /// This impl contains targeting logic
 impl Entity {
     /// Returns true if the passed location is attackable, false otherwise
-    pub fn can_attack(&self, location: Vector, board: &GameBoard, players: &Vec<Entity>) -> bool {
+    pub fn can_attack(&self, location: Vector, board: &GameBoard, _players: &Vec<Entity>) -> bool {
         let mut attackable = true; //assume truth and attempt to disprove
         let cell = board.get_board().unwrap()[location.y as usize][location.x as usize];
         let land = *cell.get_land().unwrap();
-        let cond = *cell.get_cond().unwrap();
+        let _cond = *cell.get_cond().unwrap();
 
         // Offboard spaces should always be unselectable
         if land == Terrain::Empty {
@@ -410,7 +402,7 @@ impl Entity {
     /// Returns a list of attackable coordinates of all characters controlled by a player
     pub fn list_range_ally(&self, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
         let mut targetable = vec![];
-        let player_pos = self.pos;
+        //let player_pos = self.pos;
 
         for player in players { // For all players
             for row in board.get_board()? {
@@ -692,7 +684,7 @@ impl Entity {
 
     /// Returns a list of attackable coordinates in the direction passed at the range given at the radius given. Using player will not be included
     pub fn directed_line_radial(&self, range: u32, radius: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
-        let mut targetable = vec![];
+        let mut targetable ;
         let player_pos = self.pos;
 
         //Cannot look off board
