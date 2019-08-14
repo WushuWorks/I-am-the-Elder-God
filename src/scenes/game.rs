@@ -375,17 +375,17 @@ impl ElderGame {
             },
             ActionType::Action => {
                 if self.actions > 0 {
-                    if kb[Key::Up] == Pressed { self.prev_selection()?; }
+                    if kb[Key::Up] == Pressed { self.prev_selection()?; } //Action selection
                     else if kb[Key::Down] == Pressed { self.next_selection()?;}
 
                     if kb[Key::Left] == Pressed { self.prev_direction()?; } //Direction changing
                     else if kb[Key::Right] == Pressed { self.next_direction()?;}
 
                     if kb[Key::Return] == Pressed {
+                        //Check to see if a player is allowed to use the selected ability and use it if so
                         if self.player_ref[self.curr_player].can_act(self.curr_selection + 1, &self.game_board, &self.player_ref)? {
                             self.click.execute(|music| { music.play() })?;
-                            println!("Used {:?}'s {:?} ability.", self.player_ref[self.curr_player].get_class()?,
-                                     self.player_ref[self.curr_player].act(self.curr_selection + 1, &self.game_board, &self.player_ref)?);
+                            self.player_ref[self.curr_player].act(self.curr_selection + 1, self.curr_dir, &self.game_board, &self.player_ref)?;
                             self.actions -= 1;
                         } else { self.soft_click.execute(|music| { music.play() })?; }
                     }
@@ -671,6 +671,7 @@ impl ElderGame {
         }
 
         //Draw selectable animation
+        // This targeting logic must match targeting logic used in entities targeting logic to be correct
         if self.action_state == ActionType::Action {
             //Decide which tiles to put the animation on
             let selectable_coordinates = match self.player_ref[self.curr_player].get_class()? {

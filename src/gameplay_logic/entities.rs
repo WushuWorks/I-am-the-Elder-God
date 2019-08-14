@@ -218,39 +218,77 @@ impl Entity{
         Ok(movable)
     }
 
-    /// Returns a string corresponding to the name of the passed ability number
+    /// Returns a string corresponding to the name of the passed ability number after executing the ability
     /// Accepts ability numbers 1-3 inclusively.
-    pub fn act(&self, action_index: u32, _board: &GameBoard, _players: &Vec<Entity>) -> Result<&str> {
+    pub fn act(&self, action_index: u32, direction: Direction, board: &GameBoard, players: &Vec<Entity>) -> Result<&str> {
+        let targets; //contains a list of targets for an ability
+
         let action = match self.class {
             ClassType::Support  => {
                 match action_index {
-                    1 => { Ok("Bio") },
-                    2 => { Ok("Shield") },
-                    3 => { Ok("Renew") },
+                    1 => {
+                        targets = self.adjacent_range(3, board, players)?;
+                        Ok("Bio")
+                    },
+                    2 => {
+                        targets = self.list_range_ally(board, players)?;
+                        Ok("Shield")
+                    },
+                    3 => {
+                        targets = self.adjacent_range(2, board, players)?;
+                        Ok("Renew")
+                    },
                     _ => { panic!("Unknown Support Ability Number") }
                 }
             },
             ClassType::Assault  => {
                 match action_index {
-                    1 => { Ok("Pierce") },
-                    2 => { Ok("Grenade") },
-                    3 => { Ok("Airstrike") },
+                    1 => {
+                        targets = self.directed_line_range(2, direction, board, players)?;
+                        Ok("Pierce")
+                    },
+                    2 => {
+                        targets = self.directed_line_radial_cast(3, 1, direction, board, players)?;
+                        Ok("Grenade")
+                    },
+                    3 => {
+                        targets = self.directed_line_radial(3, 3, direction, board, players)?;
+                        Ok("Airstrike")
+                    },
                     _ => { panic!("Unknown Assault Ability Number") }
                 }
             },
             ClassType::Trapper  => {
                 match action_index {
-                    1 => { Ok("Caltrop") },
-                    2 => { Ok("Spear") },
-                    3 => { Ok("Cage") },
+                    1 => {
+                        targets = self.directed_line_radial(1, 1, direction, board, players)?;
+                        Ok("Caltrop")
+                    },
+                    2 => {
+                        targets = self.directed_line_cast(6, direction, board, players)?;
+                        Ok("Spear")
+                    },
+                    3 => {
+                        targets = self.adjacent_shell(3, board, players)?;
+                        Ok("Cage")
+                    },
                     _ => { panic!("Unknown Trapper Ability Number") }
                 }
             },
             ClassType::Wraith   => {
                 match action_index {
-                    1 => { Ok("Drain") },
-                    2 => { Ok("Decoy") },
-                    3 => { Ok("Rend") },
+                    1 => {
+                        targets = self.adjacent_range(1, board, players)?;
+                        Ok("Drain") 
+                    },
+                    2 => {
+                        targets = self.adjacent_range(1, board, players)?;
+                        Ok("Decoy")
+                    },
+                    3 => {
+                        targets = self.adjacent_range(1, board, players)?;
+                        Ok("Rend")
+                    },
                     _ => { panic!("Unknown Wraith Ability Number") }
                 }
             },
@@ -287,7 +325,7 @@ impl Entity{
                     _ => { false }
                 }
             },
-            ClassType::Wraith   => {
+            ClassType::Wraith   => { //Monsters always have access to all class abilities.
                 match action_index {
                     1 => { true },
                     2 => { true },
@@ -301,6 +339,59 @@ impl Entity{
         Ok(actable)
     }
 
+}
+
+///This impl contains Action definitions
+impl Entity {
+    //Support Class
+    pub fn bio(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()> {
+        Ok(())
+    }
+    pub fn shield(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn renew(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
+        Ok(())
+    }
+
+    //Assault Class
+    pub fn pierce(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn grenade(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn airraid(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
+        Ok(())
+    }
+
+    //Trapper Class
+    pub fn caltrop(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn spear(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn cage(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
+        Ok(())
+    }
+
+    //Wraith Class
+    pub fn drain(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn decoy(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
+        Ok(())
+    }
+    pub fn rend(&self, targets: Vec<Vector>, _board: &GameBoard, _players: &Vec<Entity>) -> Result<()>  {
+        Ok(())
+    }
+}
+
+
+
+/// This impl contains targeting logic
+impl Entity {
     /// Returns true if the passed location is attackable, false otherwise
     pub fn can_attack(&self, location: Vector, board: &GameBoard, players: &Vec<Entity>) -> bool {
         let mut attackable = true; //assume truth and attempt to disprove
@@ -630,4 +721,5 @@ impl Entity{
 
         Ok(targetable)
     }
+
 }
