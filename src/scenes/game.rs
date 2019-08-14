@@ -2,7 +2,7 @@ use crate::game_logic::scene_type::SceneReturn;
 use crate::gameplay_logic::entities::*;
 use crate::gameplay_logic::animator::Animator;
 use crate::gameplay_logic::game_board::GameBoard;
-use crate::gameplay_logic::gameplay_type::TerrainStatus;
+use crate::gameplay_logic::gameplay_type::{TerrainStatus, Terrain};
 use crate::game_logic::draw_helper::*;
 
 //Resources
@@ -818,12 +818,26 @@ impl ElderGame {
         Ok(())
     }
 
-    ///Tries to move a player, returns true if moved, false otherwise
+    /// Tries to move a player, returns true if moved, false otherwise
+    /// Damage or hamper player if they move onto hazardous terrain
+    /// Spike damage scales with level and armor reduces damage.
     pub fn try_move(&mut self, new_loc: Vector) -> Result<bool> {
         let mut retval= false;
 
         if self.player_ref[self.curr_player].can_move(new_loc, &self.game_board, &self.player_ref)? {
+            let cell = self.game_board.get_board()?[new_loc.y as usize][new_loc.x as usize];
             self.player_ref[self.curr_player].set_pos(new_loc)?;
+
+            //Spikes are bad for you, don't touch them
+            if *cell.get_land()? == Terrain::Spikes {
+                if self.moves > 0 && self.moves - 1 != 0 { //take away an extra movement if they will have any extra
+                    self.moves -= 1;
+                }
+                let damage = self.player_ref[self.curr_player].get_level()? as f32 * 20.0;
+                let total_dmg = self.player_ref[self.curr_player].get_curr_stats()?.armor_reduce(damage);
+                self.player_ref[self.curr_player].get_curr_stats()?.add_hp(-total_dmg);
+            }
+
             retval = true;
         }
 
@@ -888,17 +902,13 @@ impl ElderGame {
 
         Ok(())
     }
-    pub fn shield(&self, targets: Vec<Vector>) -> Result<()>  {
-        Ok(())
-    }
-    pub fn renew(&self, targets: Vec<Vector>) -> Result<()>  {
-        Ok(())
-    }
+    pub fn shield(&self, targets: Vec<Vector>)  -> Result<()>  { Ok(()) }
+    pub fn renew(&self, targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
 
     //Assault Class
     /// Shoots a piercing shot that damages everything it hits that doesn't have a shield
     /// Including shields and frozen tiles
-    pub fn pierce(&mut self, targets: Vec<Vector>) -> Result<()>  {
+    pub fn pierce(&mut self, targets: Vec<Vector>)  -> Result<()>  {
         let mut rng = rand::thread_rng();
         let pow = self.player_ref[self.curr_player].get_curr_stats()?.get_power();
         let dmg_pow = pow * 10.0 + rng.gen_range(1.0, pow);
@@ -925,23 +935,26 @@ impl ElderGame {
         }
         Ok(())
     }
-    pub fn grenade(&self, targets: Vec<Vector>) -> Result<()>  {
-        Ok(())
-    }
-    pub fn airraid(&self, targets: Vec<Vector>) -> Result<()>  {
-        Ok(())
-    }
+    pub fn grenade(&self, targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
+    pub fn airraid(&self, targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
 
     //Trapper Class
-    pub fn caltrop(&self, targets: Vec<Vector>) -> Result<()>  {
+    ///Sets all unshielded land that are plains to spiked land
+    pub fn caltrop(&mut self, targets: Vec<Vector>) -> Result<()>  {
+        for target in targets {
+            let mut cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cond = *cell.get_cond()?;
+            let land = *cell.get_land()?;
+
+            if cond != TerrainStatus::Shielded && land == Terrain::Plain {
+                self.game_board.get_mut_board()?[target.y as usize][target.x as usize].set_land(Terrain::Spikes);
+            }
+
+        }
         Ok(())
     }
-    pub fn spear(&self, targets: Vec<Vector>) -> Result<()>  {
-        Ok(())
-    }
-    pub fn cage(&self, targets: Vec<Vector>) -> Result<()>  {
-        Ok(())
-    }
+    pub fn spear(&self, targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
+    pub fn cage(&self, targets: Vec<Vector>)    -> Result<()>  { Ok(()) }
 
     //Wraith Class
     pub fn drain(&self, targets: Vec<Vector>) -> Result<()>  {

@@ -14,6 +14,7 @@ pub enum Terrain {
     City,
     Wall,
     Pit,
+    Spikes,
     Destroyed,
     Empty, //Define invisible space with this
 }
@@ -22,15 +23,16 @@ impl Terrain {
     ///Gets the Atlas key that maps to the value
     pub fn key(&self) -> Option<&str> {
         match self {
-            Terrain::Road => Some("R"),
-            Terrain::Plain => Some("#"),
-            Terrain::Forest => Some("F"),
-            Terrain::Mountain => Some("M"),
-            Terrain::City => Some("C"),
-            Terrain::Wall => Some("W"),
-            Terrain::Pit => Some("O"),
+            Terrain::Road       => Some("R"),
+            Terrain::Plain      => Some("#"),
+            Terrain::Forest     => Some("F"),
+            Terrain::Mountain   => Some("A"),
+            Terrain::City       => Some("C"),
+            Terrain::Wall       => Some("W"),
+            Terrain::Pit        => Some("O"),
+            Terrain::Spikes     => Some("M"),
             Terrain::Destroyed  => Some("X"),
-            Terrain::Empty => Some("-"),
+            Terrain::Empty      => Some("-"),
         }
     }
 }
@@ -41,10 +43,11 @@ pub fn to_terrain(key: &str) -> Option<Terrain> {
         "R" => Some(Terrain::Road),
         "#" => Some(Terrain::Plain),
         "F" => Some(Terrain::Forest),
-        "M" => Some(Terrain::Mountain),
+        "A" => Some(Terrain::Mountain),
         "C" => Some(Terrain::City),
         "W" => Some(Terrain::Wall),
         "O" => Some(Terrain::Pit),
+        "M" => Some(Terrain::Spikes),
         "X" => Some(Terrain::Destroyed),
         "-" => Some(Terrain::Empty),
         _ => None,

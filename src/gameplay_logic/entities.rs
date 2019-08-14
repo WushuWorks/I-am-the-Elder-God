@@ -137,13 +137,6 @@ impl Attributes {
     pub fn get_power(&self)   -> &f32 { &self.power }
     pub fn get_actions(&self) -> &f32 { &self.actions }
     pub fn get_exp(&self)     -> &f32 { &self.exp }
-    //Set
-    //pub fn set_hp(&mut self, hp: f32)            { self.hp = hp }
-    //pub fn set_speed(&mut self, speed: f32)      { self.speed = speed }
-    //pub fn set_armor(&mut self, armor: f32)      { self.armor = armor }
-    //pub fn set_power(&mut self, power: f32)      { self.power = power }
-    //pub fn set_actions(&mut self, actions: f32)  { self.actions = actions }
-    //pub fn set_exp(&mut self, exp: f32)          { self.exp = exp }
     //Checked stat changes
     /// Add or subtract hp, checks for overflow, and prevents setting lower than 0.0
     pub fn add_hp(&mut self, hp: f32) -> bool    {
@@ -208,13 +201,13 @@ impl Entity{
         })
     }
     /// Gets player info
-    pub fn get_player(&self) -> Result<&PlayerType> { Ok(&self.player) }
-    pub fn get_class(&self) -> Result<&ClassType> { Ok(&self.class) }
-    pub fn get_tangible(&self) -> Result<bool> { Ok(self.tangible) }
-    pub fn get_pos(&self) -> Result<Vector> { Ok(self.pos) }
-    pub fn get_level(&self) -> Result<u32> { Ok(self.level) }
-    pub fn get_stats(&self) -> Result<&Attributes> { Ok(&self.stats) }
-    pub fn get_curr_stats(&mut self) -> Result<&mut Attributes> { Ok(&mut self.curr_stats) }
+    pub fn get_player(&self)            -> Result<&PlayerType> { Ok(&self.player) }
+    pub fn get_class(&self)             -> Result<&ClassType> { Ok(&self.class) }
+    pub fn get_tangible(&self)          -> Result<bool> { Ok(self.tangible) }
+    pub fn get_pos(&self)               -> Result<Vector> { Ok(self.pos) }
+    pub fn get_level(&self)             -> Result<u32> { Ok(self.level) }
+    pub fn get_stats(&self)             -> Result<&Attributes> { Ok(&self.stats) }
+    pub fn get_curr_stats(&mut self)    -> Result<&mut Attributes> { Ok(&mut self.curr_stats) }
     /// Sets player info
     pub fn set_pos(&mut self, new_loc: Vector) -> Result<()> {
         self.pos = new_loc;
