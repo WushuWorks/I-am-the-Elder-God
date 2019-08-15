@@ -83,6 +83,14 @@ impl Cell {
             }
         }
     }
+
+    /// Increments condition counter if greater than 0 and not Normal
+    /// We check for if the counter is greater than 0 because some not-Normal conditions can have 0 counters
+    pub fn inc_counter(&mut self) {
+        if self.cond_counter > 0 && self.condition != TerrainStatus::Normal {
+            self.cond_counter += 1;
+        }
+    }
 }
 
 /// The GameBoard is the environment that contains the game data

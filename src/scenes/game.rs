@@ -75,6 +75,7 @@ pub struct ElderGame {
     game_board: GameBoard,
 
     //Player related data
+    turn_start_loc: Vector, //Location the current player starts their turn at
     player_ref: Vec<Entity>, // players
     turn_order: Cycle<IntoIter<usize>>, // turn index iterator
     curr_player: usize, //index of current player
@@ -310,9 +311,11 @@ impl ElderGame {
             caltrop_help, spear_help, cage_help,
 
             game_board: GameBoard::new().expect("Failed to load GameBoard in scenes::game::ElderGame::new"),
+            turn_start_loc: player_ref[curr_player].get_pos()?,
             player_ref,
             turn_order,
             curr_player,
+
 
             //Turn control data
             end_flag: false,
@@ -681,9 +684,9 @@ impl ElderGame {
             let selectable_coordinates = match self.player_ref[self.curr_player].get_class()? {
                 ClassType::Support  => {
                     match self.curr_selection {
-                        0 => self.player_ref[self.curr_player].adjacent_range(3, &self.game_board, &self.player_ref)?,
+                        0 => self.player_ref[self.curr_player].adjacent_radial(3, &self.game_board, &self.player_ref)?,
                         1 => self.player_ref[self.curr_player].list_range_ally(&self.game_board, &self.player_ref)?,
-                        2 => self.player_ref[self.curr_player].adjacent_range(2, &self.game_board, &self.player_ref)?,
+                        2 => self.player_ref[self.curr_player].adjacent_radial(2, &self.game_board, &self.player_ref)?,
                         _ => panic!("Tried to draw invalid ability.")
                     }
                 },
@@ -744,6 +747,7 @@ impl ElderGame {
         self.action_state = ActionType::Move;
         self.end_flag = false;
         self.game_board.decrement_temp_cond_counters()?;
+        self.turn_start_loc = self.player_ref[self.curr_player].get_pos()?;
 
         Ok(())
     }
@@ -835,7 +839,7 @@ impl ElderGame {
                 }
                 let damage = self.player_ref[self.curr_player].get_level()? as f32 * 20.0;
                 let total_dmg = self.player_ref[self.curr_player].get_curr_stats()?.armor_reduce(damage);
-                self.player_ref[self.curr_player].get_curr_stats()?.add_hp(-total_dmg);
+                self.player_ref[self.curr_player].add_checked_hp(-total_dmg)?;
             }
 
             retval = true;
@@ -863,7 +867,7 @@ impl ElderGame {
             ActionAbility::Spear    => { self.spear(targets)? },
             ActionAbility::Cage     => { self.cage(targets)? },
             ActionAbility::Drain    => { self.drain(targets)? },
-            ActionAbility::Decoy    => { self.decoy(targets)? },
+            ActionAbility::Decoy    => { self.decoy(targets, self.turn_start_loc)? },
             ActionAbility::Rend     => { self.rend(targets)? },
         };
 
@@ -874,27 +878,17 @@ impl ElderGame {
     pub fn bio(&mut self, targets: Vec<Vector>) -> Result<()> {
         let mut rng = rand::thread_rng();
         let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
-        let heal_pow = pow * 10.0 + rng.gen_range(1.0, pow);
+        let heal_pow = pow * 10.0 + rng.gen_range(0.0, pow);
         let curr_team = *self.player_ref[self.curr_player].get_player()?;
 
         for target in targets {
             for player in &mut self.player_ref {
                 if target == player.get_pos()? { //If a player is on a targeted space
                     if curr_team == *player.get_player()? { //If player is allied
-                        //We must prevent overfilling hp
-                        let new_hp = *player.get_curr_stats()?.get_hp() + heal_pow;
-                        let max_hp = *player.get_stats()?.get_hp();
-                        let hp = *player.get_curr_stats()?.get_hp();
-
-                        if new_hp > max_hp - hp { //if new hp value is greater than max
-                            let diff = max_hp - hp;
-                            player.get_curr_stats()?.add_hp(diff); //Set it to max
-                        } else {
-                            player.get_curr_stats()?.add_hp(heal_pow);
-                        }
+                        player.add_checked_hp(heal_pow)?;
                     } else {  //Player is NOT allied, here we factor in armor
                         let damage = player.get_curr_stats()?.armor_reduce(heal_pow);
-                        player.get_curr_stats()?.add_hp(-damage);
+                        player.add_checked_hp(-damage)?;
                     }
                 }
             }
@@ -911,7 +905,7 @@ impl ElderGame {
     pub fn pierce(&mut self, targets: Vec<Vector>)  -> Result<()>  {
         let mut rng = rand::thread_rng();
         let pow = self.player_ref[self.curr_player].get_curr_stats()?.get_power();
-        let dmg_pow = pow * 10.0 + rng.gen_range(1.0, pow);
+        let dmg_pow = pow * 10.0 + rng.gen_range(0.0, pow);
 
         //Damage everything hit
         for target in targets {
@@ -922,7 +916,7 @@ impl ElderGame {
             for player in &mut self.player_ref {
                 if player.get_pos()? == target && cond != TerrainStatus::Shielded { //Damage all unshielded players in range
                     let damage = player.get_curr_stats()?.armor_reduce(dmg_pow);
-                    player.get_curr_stats()?.add_hp(-damage);
+                    player.add_checked_hp(-damage)?;
                 }
             }
             //Check for TerrainStatus and decrement if hit
@@ -953,18 +947,84 @@ impl ElderGame {
         }
         Ok(())
     }
-    pub fn spear(&self, targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
-    pub fn cage(&self, targets: Vec<Vector>)    -> Result<()>  { Ok(()) }
+    pub fn spear(&mut self, targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
+    pub fn cage(&mut self, targets: Vec<Vector>)    -> Result<()>  { Ok(()) }
 
     //Wraith Class
-    pub fn drain(&self, targets: Vec<Vector>) -> Result<()>  {
+    /// Damages all surrounding targets and heals user
+    /// Drains health from other players and shields (scaled to user level), damages ice
+    pub fn drain(&mut self, targets: Vec<Vector>) -> Result<()>  {
+        let mut rng = rand::thread_rng();
+        let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
+        let lvl = self.player_ref[self.curr_player].get_level()? as f32;
+        let dmg_pow = pow * 10.0 + rng.gen_range(0.0, pow);
+        let shield_drain = lvl * 10.0 + rng.gen_range(0.0, lvl);
+        let mut hp_drain: f32 = 0.0;
+
+        //Damage everything hit
+        for target in targets {
+            let mut cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cond = *cell.get_cond()?;
+
+            //Check if it is a player and is not shielded
+            for player in &mut self.player_ref {
+                if player.get_pos()? == target && cond != TerrainStatus::Shielded { //Damage all unshielded players in range
+                    let damage = player.get_curr_stats()?.armor_reduce(dmg_pow);
+                    hp_drain += damage;
+                    player.add_checked_hp(-damage);
+                }
+            }
+            //Check for TerrainStatus and decrement if hit
+            match cond {
+                TerrainStatus::Shielded => {
+                    hp_drain += shield_drain;
+                    self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter();
+                },
+                TerrainStatus::Frozen   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter(); },
+                _                       => {/*Ignore other types*/}
+            }
+        }
+
+        //Add total drained hp to user
+        self.player_ref[self.curr_player].add_checked_hp(hp_drain);
+
         Ok(())
     }
-    /// Freezes surrounding enemies and teleports back to location this turn begun at
-    pub fn decoy(&self, targets: Vec<Vector>) -> Result<()>  {
+    /// Freezes surrounding area, deals damage and teleports back to location this turn began at
+    /// Damages Shielded, stops Burning, and freezes normal
+    pub fn decoy(&mut self, targets: Vec<Vector>, origin: Vector) -> Result<()>  {
+        let mut rng = rand::thread_rng();
+        let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
+        let lvl = self.player_ref[self.curr_player].get_level()? as f32;
+        let dmg_pow = pow * 5.0 + rng.gen_range(0.0, pow);
+
+        for target in targets {
+            let mut cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cond = *cell.get_cond()?;
+
+            //Check if it is a player and is not shielded
+            for player in &mut self.player_ref {
+                if player.get_pos()? == target && cond != TerrainStatus::Shielded { //Damage all unshielded players in range
+                    let damage = player.get_curr_stats()?.armor_reduce(dmg_pow);
+                    player.add_checked_hp(-damage);
+                }
+            }
+
+            match cond {
+                //Damage shields
+                TerrainStatus::Shielded => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter(); },
+                //Slightly strengthen frozen tiles
+                TerrainStatus::Frozen   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].inc_counter(); },
+                TerrainStatus::Normal   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].set_cond(TerrainStatus::Frozen); },
+                _                       => {/*Ignore other types*/}
+            }
+        }
+        // Teleport back to starting loc
+        self.player_ref[self.curr_player].set_pos(origin);
+
         Ok(())
     }
-    pub fn rend(&self, targets: Vec<Vector>) -> Result<()>  {
+    pub fn rend(&mut self, targets: Vec<Vector>) -> Result<()>  {
         Ok(())
     }
 }

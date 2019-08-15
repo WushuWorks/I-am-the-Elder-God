@@ -139,8 +139,10 @@ impl Attributes {
     pub fn get_exp(&self)     -> &f32 { &self.exp }
     //Checked stat changes
     /// Add or subtract hp, checks for overflow, and prevents setting lower than 0.0
-    pub fn add_hp(&mut self, hp: f32) -> bool    {
-        let retval;
+    /// Returns true on normal operation, false if flow errors occur or a negative hp
+    /// was prevented
+    fn add_hp(&mut self, hp: f32) -> bool    {
+        let mut retval;
 
         //Check for over or underflows
         if self.hp + hp < std::f32::MIN || self.hp + hp > std::f32::MAX {
@@ -149,15 +151,15 @@ impl Attributes {
         } else {
             if self.hp + hp <= 0.0 { //Prevent negative hp
                 self.hp = 0.0;
+                retval = false;
             } else {
                 self.hp += hp;
             }
-
             retval = true;
         }
-
         retval
     }
+
     ///Takes a positive damage value and returns an armor reduced value
     pub fn armor_reduce(&mut self, dmg: f32) -> f32{
         let retval;
@@ -216,6 +218,24 @@ impl Entity{
     pub fn set_stats(&mut self, hp: f32, speed: f32, armor: f32, power: f32, actions: f32, exp: f32) -> Result<()> {
         self.stats = Attributes::new_custom_stats(hp, speed, armor, power, actions, exp)?;
         Ok(())
+    }
+    /// Adds or subtracts hp, preventing adding beyond max or lowering beyond 0.0
+    /// Returns true on normal operation, false if overfill or flow error occurs
+    pub fn add_checked_hp (&mut self, new_hp: f32) -> Result<bool> {
+        //We must prevent overfilling hp
+        let max_hp = *self.get_stats()?.get_hp();
+        let hp = *self.get_curr_stats()?.get_hp();
+        let diff = max_hp - hp;
+        let mut retval = false;
+
+        if new_hp > diff { //Max hp would be exceed
+            self.get_curr_stats()?.add_hp(diff);
+            retval = false;
+        } else {
+            retval = self.get_curr_stats()?.add_hp(new_hp);
+        }
+
+        Ok(retval)
     }
 
     /// Check to see if this entity can move into a given location
@@ -303,7 +323,7 @@ impl Entity{
             ClassType::Support  => {
                 match action_index {
                     1 => {
-                        targets = self.adjacent_range(3, board, players)?;;
+                        targets = self.adjacent_radial(3, board, players)?;;
                         ActionAbility::Bio
                     },
                     2 => {
@@ -311,7 +331,7 @@ impl Entity{
                         ActionAbility::Shield
                     },
                     3 => {
-                        targets = self.adjacent_range(2, board, players)?;
+                        targets = self.adjacent_radial(2, board, players)?;
                         ActionAbility::Renew
                     },
                     _ => { panic!("Unknown Support Ability Number") }
@@ -425,6 +445,25 @@ impl Entity {
                         if self.can_attack(cell.get_pos()?, board, players) { //The cell can be attacked
                             targetable.push(cell.get_pos()?);
                         }
+                    }
+                }
+            }
+        }
+
+        Ok(targetable)
+    }
+
+    /// Returns a list of attackable coordinates adjacent to the player up to the range specified, including the player
+    pub fn adjacent_radial(&self, range: u32, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
+        let mut targetable = vec![];
+        let player_pos = self.pos;
+
+        for row in board.get_board()? {
+            for cell in row {
+                let distance = cell.get_pos()? - player_pos;
+                if distance.x.abs() + distance.y.abs() <= range as f32 { //The cell is in range of the player
+                    if self.can_attack(cell.get_pos()?, board, players) { //The cell can be attacked
+                        targetable.push(cell.get_pos()?);
                     }
                 }
             }
