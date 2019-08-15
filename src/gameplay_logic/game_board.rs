@@ -70,7 +70,7 @@ impl Cell {
     pub fn get_pos(&self) -> Result<Vector>          { Ok(self.pos) }
     //Set func
     pub fn set_land(&mut self, terrain: Terrain)              { self.land = terrain }
-    pub fn set_cond(&mut self, terrain_status: TerrainStatus) { self.condition = terrain_status }
+    fn set_cond(&mut self, terrain_status: TerrainStatus) { self.condition = terrain_status }
     fn set_counter(&mut self, counter: u32)               { self.cond_counter = counter }
     //Decrement cond counter
     ///Decrements condition counter if greater than 0, resets TerrainStatus if counter reaches 0
@@ -95,6 +95,12 @@ impl Cell {
     pub fn reset_cond(&mut self) {
         self.condition = TerrainStatus::Normal;
         self.set_counter(0);
+    }
+
+    /// Sets a land condition and a counter
+    pub fn cond_with_counter(&mut self, condition: TerrainStatus, counter: u32) {
+        self.set_cond(condition);
+        self.set_counter(counter);
     }
 }
 

@@ -71,6 +71,9 @@ impl State for Game {
             SceneType::Game => {
                 let scene_retval = self.game_scenes.update(window)?;
                 self.outro_scenes.set_winner(self.game_scenes.get_winner()?)?;
+                if scene_retval == SceneReturn::Finished{  //Game is over so we call reset.
+                    self.game_scenes.reset()?;
+                }
                 scene_retval
             }
             SceneType::Outro => {

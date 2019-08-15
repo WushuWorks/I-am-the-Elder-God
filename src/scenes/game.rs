@@ -117,11 +117,11 @@ impl ElderGame {
 
         //Help text
         let move_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Arrow Keys to move, 0/1/2-end game", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Arrow Keys to move, 0-end game", &FontStyle::new(20.0, Color::BLACK), )}));
         let action_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Up/Down-Scroll Left/Right-Aim + Enter", &FontStyle::new(20.0, Color::BLACK), )}));
         let end_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Ending turn... 0/1/2-end game", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Ending turn... 0-end game", &FontStyle::new(20.0, Color::BLACK), )}));
 
         //Ability Labels
         //Wraith
@@ -415,20 +415,11 @@ impl ElderGame {
             self.actions -= 1;
         }
 
+        retval = self.check_game()?;
+
         if kb[Key::Key0] == Pressed {
             self.winner = PlayerType::Undetermined;
             retval = SceneReturn::Finished;
-            self.reset()?;
-        }
-        if kb[Key::Key1] == Pressed {
-            self.winner = PlayerType::Player1;
-            retval = SceneReturn::Finished;
-            self.reset()?;
-        }
-        if kb[Key::Key2] == Pressed {
-            self.winner = PlayerType::Player2;
-            retval = SceneReturn::Finished;
-            self.reset()?;
         }
 
         Ok(retval)
@@ -739,35 +730,80 @@ impl ElderGame {
         Ok(self.winner)
     }
 
-    ///Shifts index to the next player's turn, and sets variables appropriately
-    pub fn next_turn(&mut self) -> Result<()> {
+    /// Shifts index to the next player's turn, and sets variables appropriately
+    /// Also apply buff and debuff affects based on player status and land condition
+    fn next_turn(&mut self) -> Result<()> {
         self.curr_player = self.turn_order.next().expect("Cannot find next player index game::next_turn");
         self.moves = *self.player_ref[self.curr_player].get_stats()?.get_speed() as u32;
         self.actions = *self.player_ref[self.curr_player].get_stats()?.get_actions() as u32;
         self.action_state = ActionType::Move;
         self.end_flag = false;
-        self.game_board.decrement_temp_cond_counters()?;
+
         self.turn_start_loc = self.player_ref[self.curr_player].get_pos()?;
 
-        //Set buffs and debuffs depending on status
+        //Set buffs and debuffs depending on player status
         match self.player_ref[self.curr_player].get_status()? {
             Status::Normal   => {/*do nothing*/},
             Status::Crippled => { self.moves = (self.moves / 2) as u32 }, //Halve movement
         }
-        //Decrement status timer
+
+        let starting_cell = &self.game_board.get_board()?[self.turn_start_loc.y as usize][self.turn_start_loc.x as usize];
+        //Set buffs and debuffs depending on land status
+        let starting_cond = starting_cell.get_cond()?;
+        match starting_cond {
+            TerrainStatus::Burning   => { //Damage players on a burning tile
+                let mut rng = rand::thread_rng();
+                let lvl = self.player_ref[self.curr_player].get_level()? as f32;
+                let dmg_pow = lvl * 5.0 + rng.gen_range(0.0, lvl);
+
+                self.player_ref[self.curr_player].add_checked_hp(dmg_pow)?;
+            },
+            TerrainStatus::Frozen    => { self.moves = 0; }, //Can't move if frozen
+            _                        => {/*do nothing*/},
+        }
+
+        //Decrement status buff/debuff timer and gameboard land cond timers.
         self.player_ref[self.curr_player].decrement_timer();
+        self.game_board.decrement_temp_cond_counters()?;
 
         Ok(())
     }
 
+    /// Checks for victory conditions, sets winner if needed and returns value to signal end of game
+    fn check_game(&mut self) -> Result<SceneReturn> {
+        let mut retval = SceneReturn::Good ;
+
+        for player in &mut self.player_ref {
+            match player.get_player()? {
+                PlayerType::Player1 => {
+                    if *player.get_curr_stats()?.get_hp() <= 0.0 {
+                        self.winner = PlayerType::Player1;
+                        retval = SceneReturn::Finished;
+                        break;
+                    }
+                },
+                PlayerType::Player2 => {
+                    if *player.get_curr_stats()?.get_hp() <= 0.0 {
+                        self.winner = PlayerType::Player2;
+                        retval = SceneReturn::Finished;
+                        break;
+                    }
+                },
+                _                   => {/*Do nothing*/},
+            }
+        }
+
+        Ok(retval)
+    }
+
     /// Selects the next ability index between 0-2 to represent the first, second, and third options
-    pub fn next_selection(&mut self) -> Result<()> {
+    fn next_selection(&mut self) -> Result<()> {
         self.curr_selection = self.selections.next().expect("Cannot find next ability selection index.");
         Ok(())
     }
 
     /// Selects the previous ability index between 0-2 to represent the first, second, and third options
-    pub fn prev_selection(&mut self) -> Result<()> {
+    fn prev_selection(&mut self) -> Result<()> {
         //Iterating twice through a 3 element cycle is equal to going backwards once
         self.next_selection()?;
         self.next_selection()?;
@@ -775,13 +811,13 @@ impl ElderGame {
     }
 
     /// Selects the next direction and sets the current direction
-    pub fn next_direction(&mut self) -> Result<()> {
+    fn next_direction(&mut self) -> Result<()> {
         self.curr_dir = self.directions.next().expect("Cannot find next direction.");
         Ok(())
     }
 
     /// Selects the previous direction and sets the current direction
-    pub fn prev_direction(&mut self) -> Result<()> {
+    fn prev_direction(&mut self) -> Result<()> {
         //Iterating thrice through a 4 element cycle is equal to going backwards once
         self.next_direction()?;
         self.next_direction()?;
@@ -826,6 +862,8 @@ impl ElderGame {
         self.game_board = GameBoard::new()?;
         self.selections = selections;
         self.curr_selection = curr_selection;
+        self.action_state = ActionType::Move;
+        self.turn_start_loc = self.player_ref[self.curr_player].get_pos()?;
 
         Ok(())
     }
@@ -833,7 +871,7 @@ impl ElderGame {
     /// Tries to move a player, returns true if moved, false otherwise
     /// Damage or hamper player if they move onto hazardous terrain
     /// Spike damage scales with level and armor reduces damage.
-    pub fn try_move(&mut self, new_loc: Vector) -> Result<bool> {
+    fn try_move(&mut self, new_loc: Vector) -> Result<bool> {
         let mut retval= false;
 
         if self.player_ref[self.curr_player].can_move(new_loc, &self.game_board, &self.player_ref)? {
@@ -862,7 +900,7 @@ impl ElderGame {
 /// We should be guaranteed by here to never receive out of index coordinates so we do not check for that
 impl ElderGame {
     /// Executes passed action on the targets passed
-    pub fn execute_action(&mut self, targets: Vec<Vector>, ability_name: ActionAbility) -> Result<()> {
+    fn execute_action(&mut self, targets: Vec<Vector>, ability_name: ActionAbility) -> Result<()> {
         match ability_name {
             ActionAbility::Bio      => { self.bio(targets)? },
             ActionAbility::Shield   => { self.shield(targets)? },
@@ -882,7 +920,7 @@ impl ElderGame {
     }
     //Support Class
     ///Heals allies, damages non-allies
-    pub fn bio(&mut self, targets: Vec<Vector>) -> Result<()> {
+    fn bio(&mut self, targets: Vec<Vector>) -> Result<()> {
         let mut rng = rand::thread_rng();
         let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
         let heal_pow = pow * 10.0 + rng.gen_range(0.0, pow);
@@ -903,13 +941,13 @@ impl ElderGame {
 
         Ok(())
     }
-    pub fn shield(&self, _targets: Vec<Vector>)  -> Result<()>  { Ok(()) }
-    pub fn renew(&self, _targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
+    fn shield(&self, _targets: Vec<Vector>)  -> Result<()>  { Ok(()) }
+    fn renew(&self, _targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
 
     //Assault Class
     /// Shoots a piercing shot that damages everything it hits that doesn't have a shield
     /// Including shields and frozen tiles
-    pub fn pierce(&mut self, targets: Vec<Vector>)  -> Result<()>  {
+    fn pierce(&mut self, targets: Vec<Vector>)  -> Result<()>  {
         let mut rng = rand::thread_rng();
         let pow = self.player_ref[self.curr_player].get_curr_stats()?.get_power();
         let dmg_pow = pow * 10.0 + rng.gen_range(0.0, pow);
@@ -936,31 +974,33 @@ impl ElderGame {
         }
         Ok(())
     }
-    pub fn grenade(&self, _targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
-    pub fn airraid(&self, _targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
+    fn grenade(&self, _targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
+    fn airraid(&self, _targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
 
     //Trapper Class
-    ///Sets all unshielded land that are plains to spiked land
-    pub fn caltrop(&mut self, targets: Vec<Vector>) -> Result<()>  {
+    ///Sets all unshielded land that are plains, destroyed, or roads to spiked land
+    fn caltrop(&mut self, targets: Vec<Vector>) -> Result<()>  {
         for target in targets {
             let cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
             let cond = *cell.get_cond()?;
             let land = *cell.get_land()?;
 
-            if cond != TerrainStatus::Shielded && land == Terrain::Plain {
+            if cond != TerrainStatus::Shielded &&
+                (land == Terrain::Plain || land == Terrain::Destroyed || land == Terrain::Road)
+            {
                 self.game_board.get_mut_board()?[target.y as usize][target.x as usize].set_land(Terrain::Spikes);
             }
 
         }
         Ok(())
     }
-    pub fn spear(&mut self, _targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
-    pub fn cage(&mut self, _targets: Vec<Vector>)    -> Result<()>  { Ok(()) }
+    fn spear(&mut self, _targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
+    fn cage(&mut self, _targets: Vec<Vector>)    -> Result<()>  { Ok(()) }
 
     //Wraith Class
     /// Damages all surrounding targets and heals user
     /// Drains health from other players and shields (scaled to user level), damages ice
-    pub fn drain(&mut self, targets: Vec<Vector>) -> Result<()>  {
+    fn drain(&mut self, targets: Vec<Vector>) -> Result<()>  {
         let mut rng = rand::thread_rng();
         let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
         let lvl = self.player_ref[self.curr_player].get_level()? as f32;
@@ -999,7 +1039,7 @@ impl ElderGame {
     }
     /// Freezes surrounding area, deals damage and teleports back to location this turn began at
     /// Damages Shielded, stops Burning, and freezes normal
-    pub fn decoy(&mut self, targets: Vec<Vector>, origin: Vector) -> Result<()>  {
+    fn decoy(&mut self, targets: Vec<Vector>, origin: Vector) -> Result<()>  {
         let mut rng = rand::thread_rng();
         let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
         let dmg_pow = pow * 5.0 + rng.gen_range(0.0, pow);
@@ -1024,7 +1064,7 @@ impl ElderGame {
                 //Extinguish burning tiles without applying effect of burning
                 TerrainStatus::Burning  => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].reset_cond(); }
                 //Freeze normal tiles
-                TerrainStatus::Normal   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].set_cond(TerrainStatus::Frozen); },
+                TerrainStatus::Normal   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].cond_with_counter(TerrainStatus::Frozen, 3); },
                 _                       => {/*Ignore other types*/}
             }
         }
@@ -1035,7 +1075,7 @@ impl ElderGame {
     }
     /// Deals damage and inflicts the Crippled status ailment
     /// Damages Shielded, and Frozen cells
-    pub fn rend(&mut self, targets: Vec<Vector>) -> Result<()>  {
+    fn rend(&mut self, targets: Vec<Vector>) -> Result<()>  {
         let mut rng = rand::thread_rng();
         let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
         let dmg_pow = pow * 10.0 + rng.gen_range(0.0, pow);
