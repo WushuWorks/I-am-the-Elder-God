@@ -175,8 +175,14 @@ impl Attributes {
     }
 }
 
+///Status effects a player can have
+#[derive(Debug, Clone, Copy)]
+pub enum Status {
+    Normal,
+    Crippled,
+}
+
 /// This models the most universal class
-#[allow(unused)]
 #[derive(Debug, Clone, Copy)]
 pub struct Entity {
     player: PlayerType,
@@ -186,6 +192,8 @@ pub struct Entity {
     level: u32,
     pos: Vector,
     invincible: bool,
+    status: Status,
+    status_timer: u32,
     tangible: bool, //Will this Entity be pass-through?
 }
 
@@ -199,6 +207,8 @@ impl Entity{
             stats: Attributes::new().set_class(&class).expect("Cannot set class stats"),
             curr_stats: Attributes::new().set_class(&class).expect("Cannot set class stats"),
             level, pos, invincible,
+            status: Status::Normal,
+            status_timer: 0,
             tangible: true,
         })
     }
@@ -208,16 +218,33 @@ impl Entity{
     pub fn get_tangible(&self)          -> Result<bool> { Ok(self.tangible) }
     pub fn get_pos(&self)               -> Result<Vector> { Ok(self.pos) }
     pub fn get_level(&self)             -> Result<u32> { Ok(self.level) }
+    pub fn get_status(&self)            -> Result<Status> { Ok(self.status) }
     pub fn get_stats(&self)             -> Result<&Attributes> { Ok(&self.stats) }
     pub fn get_curr_stats(&mut self)    -> Result<&mut Attributes> { Ok(&mut self.curr_stats) }
-    /// Sets player info
+    /// Sets player position
     pub fn set_pos(&mut self, new_loc: Vector) -> Result<()> {
         self.pos = new_loc;
         Ok(())
     }
+    /// Sets players stats
     pub fn set_stats(&mut self, hp: f32, speed: f32, armor: f32, power: f32, actions: f32, exp: f32) -> Result<()> {
         self.stats = Attributes::new_custom_stats(hp, speed, armor, power, actions, exp)?;
         Ok(())
+    }
+    /// Sets a status with a duration
+    pub fn set_status(&mut self, new_status: Status, duration: u32)  -> Result<()> {
+        self.status = new_status;
+        self.status_timer = duration;
+        Ok(())
+    }
+    /// Decrements the status timer, and resets status to normal if it reaches 0
+    pub fn decrement_timer(&mut self) {
+        if self.status_timer > 0 {
+            self.status_timer -= 1;
+            if self.status_timer == 0 {
+                self.set_status(Status::Normal, 0);
+            }
+        }
     }
     /// Adds or subtracts hp, preventing adding beyond max or lowering beyond 0.0
     /// Returns true on normal operation, false if overfill or flow error occurs
@@ -226,7 +253,7 @@ impl Entity{
         let max_hp = *self.get_stats()?.get_hp();
         let hp = *self.get_curr_stats()?.get_hp();
         let diff = max_hp - hp;
-        let mut retval = false;
+        let retval;
 
         if new_hp > diff { //Max hp would be exceed
             self.get_curr_stats()?.add_hp(diff);
@@ -382,7 +409,7 @@ impl Entity{
                         ActionAbility::Decoy
                     },
                     3 => {
-                        targets = self.adjacent_range(1, board, players)?;
+                        targets = self.directed_line_radial(1,1, direction, board, players)?;
                         ActionAbility::Rend
                     },
                     _ => { panic!("Unknown Wraith Ability Number") }

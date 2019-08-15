@@ -55,7 +55,6 @@ pub struct Cell {
     cond_counter: u32,
 }
 
-#[allow(unused)]
 impl Cell {
     pub fn new() -> Self {
         Self{
@@ -72,7 +71,7 @@ impl Cell {
     //Set func
     pub fn set_land(&mut self, terrain: Terrain)              { self.land = terrain }
     pub fn set_cond(&mut self, terrain_status: TerrainStatus) { self.condition = terrain_status }
-    pub fn set_counter(&mut self, counter: u32)               { self.cond_counter = counter }
+    fn set_counter(&mut self, counter: u32)               { self.cond_counter = counter }
     //Decrement cond counter
     ///Decrements condition counter if greater than 0, resets TerrainStatus if counter reaches 0
     pub fn decr_counter(&mut self) {
@@ -90,6 +89,12 @@ impl Cell {
         if self.cond_counter > 0 && self.condition != TerrainStatus::Normal {
             self.cond_counter += 1;
         }
+    }
+
+    /// Resets land condition without applying effects of it naturally expiring
+    pub fn reset_cond(&mut self) {
+        self.condition = TerrainStatus::Normal;
+        self.set_counter(0);
     }
 }
 

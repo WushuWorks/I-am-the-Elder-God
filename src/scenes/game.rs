@@ -201,11 +201,11 @@ impl ElderGame {
             font.render("Deploy a trapping forcefield on you", &FontStyle::new(20.0, Color::BLACK), )}));
         //Wraith
         let drain_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Siphon life from a target", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Siphon life from surrounding targets", &FontStyle::new(20.0, Color::BLACK), )}));
         let decoy_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Freeze adjacent targets and flee", &FontStyle::new(20.0, Color::BLACK), )}));
         let rend_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Cripple surrounding targets", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Cripple and damage forward targets", &FontStyle::new(20.0, Color::BLACK), )}));
 
         let controls_text = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("[Press]", &FontStyle::new(17.0, Color::WHITE), )}));
@@ -710,7 +710,7 @@ impl ElderGame {
                     match self.curr_selection {
                         0 => self.player_ref[self.curr_player].adjacent_range(1, &self.game_board, &self.player_ref)?,
                         1 => self.player_ref[self.curr_player].adjacent_range(1, &self.game_board, &self.player_ref)?,
-                        2 => self.player_ref[self.curr_player].adjacent_range(1, &self.game_board, &self.player_ref)?,
+                        2 => self.player_ref[self.curr_player].directed_line_radial(1, 1,self.curr_dir, &self.game_board, &self.player_ref)?,
                         _ => panic!("Tried to draw invalid ability.")
                     }
                 },
@@ -739,7 +739,7 @@ impl ElderGame {
         Ok(self.winner)
     }
 
-    ///Shifts index to the next player's turn, and sets variables
+    ///Shifts index to the next player's turn, and sets variables appropriately
     pub fn next_turn(&mut self) -> Result<()> {
         self.curr_player = self.turn_order.next().expect("Cannot find next player index game::next_turn");
         self.moves = *self.player_ref[self.curr_player].get_stats()?.get_speed() as u32;
@@ -748,6 +748,14 @@ impl ElderGame {
         self.end_flag = false;
         self.game_board.decrement_temp_cond_counters()?;
         self.turn_start_loc = self.player_ref[self.curr_player].get_pos()?;
+
+        //Set buffs and debuffs depending on status
+        match self.player_ref[self.curr_player].get_status()? {
+            Status::Normal   => {/*do nothing*/},
+            Status::Crippled => { self.moves = (self.moves / 2) as u32 }, //Halve movement
+        }
+        //Decrement status timer
+        self.player_ref[self.curr_player].decrement_timer();
 
         Ok(())
     }
@@ -1015,6 +1023,9 @@ impl ElderGame {
                 TerrainStatus::Shielded => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter(); },
                 //Slightly strengthen frozen tiles
                 TerrainStatus::Frozen   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].inc_counter(); },
+                //Extinguish burning tiles without applying effect of burning
+                TerrainStatus::Burning  => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].reset_cond(); }
+                //Freeze normal tiles
                 TerrainStatus::Normal   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].set_cond(TerrainStatus::Frozen); },
                 _                       => {/*Ignore other types*/}
             }
@@ -1024,7 +1035,35 @@ impl ElderGame {
 
         Ok(())
     }
+    /// Deals damage and inflicts the Crippled status ailment
+    /// Damages Shielded, and Frozen cells
     pub fn rend(&mut self, targets: Vec<Vector>) -> Result<()>  {
+        let mut rng = rand::thread_rng();
+        let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
+        let dmg_pow = pow * 10.0 + rng.gen_range(0.0, pow);
+
+        //Damage everything hit
+        for target in targets {
+            let mut cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cond = *cell.get_cond()?;
+
+            //Check if it is a player and is not shielded
+            for player in &mut self.player_ref {
+                if player.get_pos()? == target && cond != TerrainStatus::Shielded { //Damage all unshielded players in range
+                    let damage = player.get_curr_stats()?.armor_reduce(dmg_pow);
+                    player.add_checked_hp(-damage);
+                    player.set_status(Status::Crippled, 3);
+                }
+            }
+            //Check for TerrainStatus and decrement if hit
+            match cond {
+                TerrainStatus::Shielded => {
+                    self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter();
+                },
+                TerrainStatus::Frozen   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter(); },
+                _                       => {/*Ignore other types*/}
+            }
+        }
         Ok(())
     }
 }
