@@ -28,7 +28,7 @@ fn generate_map(size: Vector, level: Vec<String>, level_condition: Vec<String>) 
             let cond_counter: u32 = match condition {
                 TerrainStatus::Burning  => 5,
                 TerrainStatus::Frozen   => 6,
-                TerrainStatus::Shielded => 4,
+                TerrainStatus::Shielded => 1,
                 _                       => 0,
             };
 
@@ -55,7 +55,6 @@ pub struct Cell {
     cond_counter: u32,
 }
 
-#[allow(unused)]
 impl Cell {
     pub fn new() -> Self {
         Self{
@@ -71,8 +70,38 @@ impl Cell {
     pub fn get_pos(&self) -> Result<Vector>          { Ok(self.pos) }
     //Set func
     pub fn set_land(&mut self, terrain: Terrain)              { self.land = terrain }
-    pub fn set_cond(&mut self, terrain_status: TerrainStatus) { self.condition = terrain_status }
-    pub fn set_counter(&mut self, counter: u32)               { self.cond_counter = counter }
+    fn set_cond(&mut self, terrain_status: TerrainStatus) { self.condition = terrain_status }
+    fn set_counter(&mut self, counter: u32)               { self.cond_counter = counter }
+    //Decrement cond counter
+    ///Decrements condition counter if greater than 0, resets TerrainStatus if counter reaches 0
+    pub fn decr_counter(&mut self) {
+        if self.cond_counter > 0{
+            self.cond_counter -= 1;
+            if self.cond_counter <= 0 {
+                self.condition = TerrainStatus::Normal;
+            }
+        }
+    }
+
+    /// Increments condition counter if greater than 0 and not Normal
+    /// We check for if the counter is greater than 0 because some not-Normal conditions can have 0 counters
+    pub fn inc_counter(&mut self) {
+        if self.cond_counter > 0 && self.condition != TerrainStatus::Normal {
+            self.cond_counter += 1;
+        }
+    }
+
+    /// Resets land condition without applying effects of it naturally expiring
+    pub fn reset_cond(&mut self) {
+        self.condition = TerrainStatus::Normal;
+        self.set_counter(0);
+    }
+
+    /// Sets a land condition and a counter
+    pub fn cond_with_counter(&mut self, condition: TerrainStatus, counter: u32) {
+        self.set_cond(condition);
+        self.set_counter(counter);
+    }
 }
 
 /// The GameBoard is the environment that contains the game data
@@ -95,6 +124,9 @@ impl GameBoard {
 
     pub fn get_board(&self) -> Result<&Vec<Vec<Cell>>> {
         Ok(&self.board)
+    }
+    pub fn get_mut_board(&mut self) -> Result<&mut Vec<Vec<Cell>>> {
+        Ok(&mut self.board)
     }
 
     ///Decrements some counters in cell, and resets conditions to Normal if it reaches 0

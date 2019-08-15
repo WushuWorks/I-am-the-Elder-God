@@ -10,3 +10,4 @@ edition = "2018"
 quicksilver = { version = "0.3.18", default-features = false, features = ["fonts", "saving", "sounds"]}
 nalgebra = "0.18.0"
 ncollide2d = "0.19.2"
+rand = "0.7.0"
