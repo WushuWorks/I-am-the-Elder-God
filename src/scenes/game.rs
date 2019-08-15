@@ -860,7 +860,6 @@ impl ElderGame {
 
 /// This impl contains Action definitions and a routing function to execute them
 /// We should be guaranteed by here to never receive out of index coordinates so we do not check for that
-#[allow(unused)]
 impl ElderGame {
     /// Executes passed action on the targets passed
     pub fn execute_action(&mut self, targets: Vec<Vector>, ability_name: ActionAbility) -> Result<()> {
@@ -904,8 +903,8 @@ impl ElderGame {
 
         Ok(())
     }
-    pub fn shield(&self, targets: Vec<Vector>)  -> Result<()>  { Ok(()) }
-    pub fn renew(&self, targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
+    pub fn shield(&self, _targets: Vec<Vector>)  -> Result<()>  { Ok(()) }
+    pub fn renew(&self, _targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
 
     //Assault Class
     /// Shoots a piercing shot that damages everything it hits that doesn't have a shield
@@ -917,7 +916,7 @@ impl ElderGame {
 
         //Damage everything hit
         for target in targets {
-            let mut cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
             let cond = *cell.get_cond()?;
 
             //Check if it is a player and is not shielded
@@ -937,14 +936,14 @@ impl ElderGame {
         }
         Ok(())
     }
-    pub fn grenade(&self, targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
-    pub fn airraid(&self, targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
+    pub fn grenade(&self, _targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
+    pub fn airraid(&self, _targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
 
     //Trapper Class
     ///Sets all unshielded land that are plains to spiked land
     pub fn caltrop(&mut self, targets: Vec<Vector>) -> Result<()>  {
         for target in targets {
-            let mut cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
             let cond = *cell.get_cond()?;
             let land = *cell.get_land()?;
 
@@ -955,8 +954,8 @@ impl ElderGame {
         }
         Ok(())
     }
-    pub fn spear(&mut self, targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
-    pub fn cage(&mut self, targets: Vec<Vector>)    -> Result<()>  { Ok(()) }
+    pub fn spear(&mut self, _targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
+    pub fn cage(&mut self, _targets: Vec<Vector>)    -> Result<()>  { Ok(()) }
 
     //Wraith Class
     /// Damages all surrounding targets and heals user
@@ -971,7 +970,7 @@ impl ElderGame {
 
         //Damage everything hit
         for target in targets {
-            let mut cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
             let cond = *cell.get_cond()?;
 
             //Check if it is a player and is not shielded
@@ -979,7 +978,7 @@ impl ElderGame {
                 if player.get_pos()? == target && cond != TerrainStatus::Shielded { //Damage all unshielded players in range
                     let damage = player.get_curr_stats()?.armor_reduce(dmg_pow);
                     hp_drain += damage;
-                    player.add_checked_hp(-damage);
+                    player.add_checked_hp(-damage)?;
                 }
             }
             //Check for TerrainStatus and decrement if hit
@@ -994,7 +993,7 @@ impl ElderGame {
         }
 
         //Add total drained hp to user
-        self.player_ref[self.curr_player].add_checked_hp(hp_drain);
+        self.player_ref[self.curr_player].add_checked_hp(hp_drain)?;
 
         Ok(())
     }
@@ -1003,18 +1002,17 @@ impl ElderGame {
     pub fn decoy(&mut self, targets: Vec<Vector>, origin: Vector) -> Result<()>  {
         let mut rng = rand::thread_rng();
         let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
-        let lvl = self.player_ref[self.curr_player].get_level()? as f32;
         let dmg_pow = pow * 5.0 + rng.gen_range(0.0, pow);
 
         for target in targets {
-            let mut cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
             let cond = *cell.get_cond()?;
 
             //Check if it is a player and is not shielded
             for player in &mut self.player_ref {
                 if player.get_pos()? == target && cond != TerrainStatus::Shielded { //Damage all unshielded players in range
                     let damage = player.get_curr_stats()?.armor_reduce(dmg_pow);
-                    player.add_checked_hp(-damage);
+                    player.add_checked_hp(-damage)?;
                 }
             }
 
@@ -1031,7 +1029,7 @@ impl ElderGame {
             }
         }
         // Teleport back to starting loc
-        self.player_ref[self.curr_player].set_pos(origin);
+        self.player_ref[self.curr_player].set_pos(origin)?;
 
         Ok(())
     }
@@ -1044,22 +1042,20 @@ impl ElderGame {
 
         //Damage everything hit
         for target in targets {
-            let mut cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
             let cond = *cell.get_cond()?;
 
             //Check if it is a player and is not shielded
             for player in &mut self.player_ref {
                 if player.get_pos()? == target && cond != TerrainStatus::Shielded { //Damage all unshielded players in range
                     let damage = player.get_curr_stats()?.armor_reduce(dmg_pow);
-                    player.add_checked_hp(-damage);
-                    player.set_status(Status::Crippled, 3);
+                    player.add_checked_hp(-damage)?;
+                    player.set_status(Status::Crippled, 3)?;
                 }
             }
             //Check for TerrainStatus and decrement if hit
             match cond {
-                TerrainStatus::Shielded => {
-                    self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter();
-                },
+                TerrainStatus::Shielded => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter(); },
                 TerrainStatus::Frozen   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter(); },
                 _                       => {/*Ignore other types*/}
             }
