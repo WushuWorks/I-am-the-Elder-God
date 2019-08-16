@@ -39,7 +39,7 @@ development. My hope is that this will encourage further investment into Rust as
 ### Sources and Inspirations Cited
 
 This game makes heavy use of the state machine used in [Mehen's Portable Casino](https://github.com/OtherAesop/mehens_portable_casino)
-and shares structure and code with it.
+and shares structure and code with it. [Quicksilver Rougelike](https://github.com/tomassedovic/quicksilver-roguelike) was used as a template to learn Quicksilver in practice, and has some code similarities.
 
 This game was heavily inspired by [Evolve](https://2k.com/en-US/game/evolve/) and [Arkham Horror](https://www.fantasyflightgames.com/en/products/arkham-horror-third-edition/)
 
