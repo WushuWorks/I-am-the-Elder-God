@@ -32,7 +32,7 @@ pub struct ElderGame {
     game_background: Asset<Image>,
     game_overlay: Asset<Image>,
 
-    //Text
+    //--------Text-------//
     //Help
     move_help: Asset<Image>,
     action_help: Asset<Image>,
@@ -70,6 +70,7 @@ pub struct ElderGame {
     caltrop_grey: Asset<Image>, spear_grey: Asset<Image>, cage_grey: Asset<Image>,
     caltrop_white: Asset<Image>, spear_white: Asset<Image>, cage_white: Asset<Image>,
     caltrop_help: Asset<Image>, spear_help: Asset<Image>, cage_help: Asset<Image>,
+    //--------Text End-------//
 
     //game_board layer
     game_board: GameBoard,
@@ -103,6 +104,7 @@ pub struct ElderGame {
 
 //This is here to prevent silly warning about flags
 #[allow(unused_assignments)]
+
 impl ElderGame {
     /// Load the assets and initialise the game
     pub fn new() -> Result<Self> {
