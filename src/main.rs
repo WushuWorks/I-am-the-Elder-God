@@ -8,7 +8,9 @@ use game_logic::main_state::Game;
 //Resources
 use quicksilver::prelude::*;
 
+
 fn main() {
+    //Code from here heavily borrows from https://github.com/tomassedovic/quicksilver-roguelike
 
     // NOTE: Set HIDPI to 1.0 to get pixel-perfect rendering.
     // Otherwise the window resizes to whatever value the OS sets and
