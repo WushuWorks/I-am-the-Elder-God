@@ -454,6 +454,29 @@ impl Entity {
         attackable
     }
 
+    /// Returns true if the passed location is grappable
+    pub fn can_grapple(&self, location: Vector, board: &GameBoard, players: &Vec<Entity>) -> bool {
+        let mut grappable= false;
+        let cell = board.get_board().unwrap()[location.y as usize][location.x as usize];
+        let land = *cell.get_land().unwrap();
+        let cond = *cell.get_cond().unwrap();
+
+        if cond == TerrainStatus::Shielded || cond == TerrainStatus::Frozen { // Check for terrain conditions
+            grappable = true;
+        } else if land == Terrain::Wall || land == Terrain::Mountain { // Check for terrains
+            grappable = true;
+        } else {
+            for player in players { //Check for players
+                if player.get_pos().unwrap() == location {
+                    grappable = true;
+                    break;
+                }
+            }
+        }
+
+        grappable
+    }
+
     /// Returns a list of attackable coordinates of all characters controlled by a player
     pub fn list_range_ally(&self, board: &GameBoard, players: &Vec<Entity>) -> Result<Vec<Vector>> {
         let mut targetable = vec![];
@@ -619,6 +642,7 @@ impl Entity {
                         if player_pos.y - elem as f32 <= 0.0 { break } //Stop if we hit an edge
                         if self.can_attack(Vector::new(player_pos.x, player_pos.y - elem as f32), board, players) {
                             targetable.push(Vector::new(player_pos.x, player_pos.y - elem as f32));
+
                         } else {
                             if self.can_move(Vector::new(player_pos.x, player_pos.y - elem as f32), board, players)? {
                                 targetable.push(Vector::new(player_pos.x, player_pos.y - elem as f32));
@@ -674,6 +698,14 @@ impl Entity {
                 }
             },
         }
+
+        let mut counter = 0;
+        for target in &targetable {
+            if self.can_grapple(*target, board, players) { break; }
+            counter += 1;
+        }
+        if counter == targetable.len(){ counter -= 1; }
+        targetable.split_off(counter+1);
 
         Ok(targetable)
     }

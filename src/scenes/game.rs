@@ -1086,7 +1086,7 @@ impl ElderGame {
     }
 
     //Trapper Class
-    ///Sets all unshielded land that are plains, destroyed, or roads to spiked land
+    /// Sets all unshielded land that are plains, destroyed, or roads to spiked land
     fn caltrop(&mut self, targets: Vec<Vector>)  -> Result<()>  {
         for target in targets {
             let cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
@@ -1102,7 +1102,12 @@ impl ElderGame {
         }
         Ok(())
     }
-    fn spear(&mut self, _targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
+
+    /// Damages and d
+    fn spear(&mut self, targets: Vec<Vector>)   -> Result<()>  {
+
+        Ok(())
+    }
     fn cage(&mut self, _targets: Vec<Vector>)    -> Result<()>  { Ok(()) }
 
     //Wraith Class
