@@ -1049,11 +1049,45 @@ impl ElderGame {
         }
         Ok(())
     }
-    fn airraid(&self, _targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
+
+    /// Deals serious damage to random tiles within selected area
+    fn airraid(&mut self, targets: Vec<Vector>)     -> Result<()>  {
+        let mut rng = rand::thread_rng();
+        let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
+        let dmg_pow = pow * 30.0 + rng.gen_range(0.0, pow * 2.0);
+
+        let chance_hit = rng.gen_range(33.3, 66.6);
+
+        //Damage everything hit, destroy all shields, and destroy land
+        for target in targets {
+            if !rng.gen_bool(chance_hit) { continue; } // If the attack doesn't hit we skip the target
+
+            let cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cond = *cell.get_cond()?;
+
+            //Check if it is a player and is not shielded
+            for player in &mut self.player_ref {
+                if player.get_pos()? == target && cond != TerrainStatus::Shielded { //Damage all unshielded players in range
+                    let damage = player.get_curr_stats()?.armor_reduce(dmg_pow);
+                    player.add_checked_hp(-damage)?;
+                }
+            }
+            //Check for TerrainStatus, destroy shields if present, and destroy all lands present
+            match cond {
+                TerrainStatus::Shielded => {
+                    self.game_board.get_mut_board()?[target.y as usize][target.x as usize].cond_with_counter(TerrainStatus::Normal, 0);
+                    self.game_board.get_mut_board()?[target.y as usize][target.x as usize].set_land(Terrain::Destroyed);
+                },
+                _ => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].set_land(Terrain::Destroyed); }
+            }
+        }
+
+        Ok(())
+    }
 
     //Trapper Class
     ///Sets all unshielded land that are plains, destroyed, or roads to spiked land
-    fn caltrop(&mut self, targets: Vec<Vector>) -> Result<()>  {
+    fn caltrop(&mut self, targets: Vec<Vector>)  -> Result<()>  {
         for target in targets {
             let cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
             let cond = *cell.get_cond()?;
