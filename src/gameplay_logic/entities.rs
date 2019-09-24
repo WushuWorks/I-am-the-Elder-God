@@ -173,13 +173,20 @@ impl Attributes {
 
         retval
     }
+
+    /// Sets hp to 0
+    fn set_zero(&mut self) -> Result<bool> {
+        self.hp = 0.0;
+        Ok(true)
+    }
 }
 
 ///Status effects a player can have
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Status {
     Normal,
     Crippled,
+    Dead,
 }
 
 /// This models the most universal class
@@ -246,6 +253,11 @@ impl Entity{
             }
         }
     }
+    /// Resets player status to normal
+    pub fn reset_status(&mut self) {
+        self.set_status(Status::Normal, 0);
+    }
+
     /// Adds or subtracts hp, preventing adding beyond max or lowering beyond 0.0
     /// Returns true on normal operation, false if overfill or flow error occurs
     pub fn add_checked_hp (&mut self, new_hp: f32) -> Result<bool> {
@@ -264,6 +276,9 @@ impl Entity{
 
         Ok(retval)
     }
+
+    /// Call function to set hp to 0
+    pub fn set_no_hp(&mut self) -> Result<bool> { self.get_curr_stats()?.set_zero() }
 
     /// Check to see if this entity can move into a given location
     pub fn can_move(&self, location: Vector, board: &GameBoard, players: &Vec<Entity>) -> Result<bool> {

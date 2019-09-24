@@ -186,7 +186,7 @@ impl ElderGame {
         let shield_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Stationary shield bubble on allies", &FontStyle::new(20.0, Color::BLACK), )}));
         let renew_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
-            font.render("Radial revive, heal, and restore", &FontStyle::new(20.0, Color::BLACK), )}));
+            font.render("Radial revive and restore", &FontStyle::new(20.0, Color::BLACK), )}));
         //Assault
         let pierce_help = Asset::new(Font::load(font_mononoki).and_then(|font| {
             font.render("Fire a shot that penetrates barriers", &FontStyle::new(20.0, Color::BLACK), )}));
@@ -747,6 +747,7 @@ impl ElderGame {
         match self.player_ref[self.curr_player].get_status()? {
             Status::Normal   => {/*do nothing*/},
             Status::Crippled => { self.moves = (self.moves / 2) as u32 }, //Halve movement
+            Status::Dead => {  }
         }
 
         let starting_cell = &self.game_board.get_board()?[self.turn_start_loc.y as usize][self.turn_start_loc.x as usize];
@@ -900,6 +901,7 @@ impl ElderGame {
 
 /// This impl contains Action definitions and a routing function to execute them
 /// We should be guaranteed by here to never receive out of index coordinates so we do not check for that
+/// We also assume that passed coordinates are the correct targets and do not check that either
 impl ElderGame {
     /// Executes passed action on the targets passed
     fn execute_action(&mut self, targets: Vec<Vector>, ability_name: ActionAbility) -> Result<()> {
@@ -921,7 +923,7 @@ impl ElderGame {
         Ok(())
     }
     //Support Class
-    ///Heals allies, damages non-allies
+    /// Heals allies, damages non-allies
     fn bio(&mut self, targets: Vec<Vector>) -> Result<()> {
         let mut rng = rand::thread_rng();
         let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
@@ -943,8 +945,48 @@ impl ElderGame {
 
         Ok(())
     }
-    fn shield(&self, _targets: Vec<Vector>)  -> Result<()>  { Ok(()) }
-    fn renew(&self, _targets: Vec<Vector>)   -> Result<()>  { Ok(()) }
+
+    /// Creates a shield on targets with a strength equal to the user's
+    fn shield(&mut self, targets: Vec<Vector>)  -> Result<()>  {
+        let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
+
+        for target in targets {
+            let cell = &mut self.game_board.get_mut_board()?[target.y as usize][target.x as usize];
+            cell.cond_with_counter(TerrainStatus::Shielded, pow as u32);
+        }
+
+        Ok(())
+    }
+
+    /// Revives targets with a small amount of their max hp and heals status ailments
+    fn renew(&mut self, targets: Vec<Vector>)   -> Result<()>  {
+        let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
+
+        for target in targets {
+            for player in &mut self.player_ref {
+                if target == player.get_pos()? { //If a player is on a targeted space
+                    if player.get_status()? == Status::Dead {
+
+                        let mut threshold = pow * 2.0; //If hp remaining is below this we restore up to here, this value is between 10-100%
+                        if threshold > 100.0 { threshold = 100.0; }
+                        else if threshold < 10.0 { threshold = 10.0; }
+
+                        let max_hp = *player.get_stats()?.get_hp();
+                        let curr_hp = *player.get_curr_stats()?.get_hp();
+                        let remaining: f32 = (curr_hp / max_hp) * 100.0; //here we have a % of max hp
+
+                        if remaining < threshold { //The min hp value is not met
+                            player.add_checked_hp((max_hp * threshold) - curr_hp)?;
+                        }
+                    }
+
+                    player.reset_status();
+                }
+            }
+        }
+
+        Ok(())
+    }
 
     //Assault Class
     /// Shoots a piercing shot that damages everything it hits that doesn't have a shield
