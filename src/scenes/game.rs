@@ -1018,7 +1018,37 @@ impl ElderGame {
         }
         Ok(())
     }
-    fn grenade(&self, _targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
+
+    /// Deals damage, melts frozen tiles, ignites unshielded tiles, intensifies already burning tiles
+    fn grenade(&mut self, targets: Vec<Vector>)     -> Result<()>  {
+        let mut rng = rand::thread_rng();
+        let pow = *self.player_ref[self.curr_player].get_curr_stats()?.get_power();
+        let dmg_pow = pow * 10.0 + rng.gen_range(0.0, pow);
+
+        //Damage everything hit
+        for target in targets {
+            let cell = &self.game_board.get_board()?[target.y as usize][target.x as usize];
+            let cond = *cell.get_cond()?;
+
+            //Check if it is a player and is not shielded
+            for player in &mut self.player_ref {
+                if player.get_pos()? == target && cond != TerrainStatus::Shielded { //Damage all unshielded players in range
+                    let damage = player.get_curr_stats()?.armor_reduce(dmg_pow);
+                    player.add_checked_hp(-damage)?;
+                }
+            }
+            //Check for TerrainStatus and decrement if hit
+            match cond {
+                TerrainStatus::Shielded => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].decr_counter(); },
+                TerrainStatus::Frozen   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].cond_with_counter(TerrainStatus::Normal, 0); },
+                TerrainStatus::Burning  => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].inc_counter(); },
+                TerrainStatus::Normal   => { self.game_board.get_mut_board()?[target.y as usize][target.x as usize].cond_with_counter(TerrainStatus::Burning, pow as u32); },
+                _                       => {/*Ignore other types*/}
+            }
+
+        }
+        Ok(())
+    }
     fn airraid(&self, _targets: Vec<Vector>)     -> Result<()>  { Ok(()) }
 
     //Trapper Class
